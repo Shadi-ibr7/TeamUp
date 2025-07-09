@@ -1,50 +1,156 @@
-# Welcome to your Expo app 👋
+# TeamUp - Application Sportive Sociale
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Une application React Native/Expo pour organiser et rejoindre des événements sportifs.
 
-## Get started
+## 🚀 Fonctionnalités
 
-1. Install dependencies
+- **Découverte d'événements** sportifs à proximité
+- **Chat en temps réel** pour chaque événement
+- **Géolocalisation** pour trouver des événements près de chez vous
+- **Authentification** utilisateur avec Supabase
+- **Interface moderne** avec Tailwind CSS (NativeWind)
 
+## 🛠️ Technologies
+
+- **Frontend** : React Native + Expo
+- **Styling** : Tailwind CSS (NativeWind)
+- **Backend** : Supabase (PostgreSQL + Auth + Realtime)
+- **Navigation** : Expo Router
+- **Maps** : React Native Maps (mobile) + Fallback web
+
+## 📱 Installation
+
+1. **Cloner le projet**
+   ```bash
+   git clone <votre-repo>
+   cd TeamUp
+   ```
+
+2. **Installer les dépendances**
    ```bash
    npm install
    ```
 
-2. Start the app
+3. **Configurer Supabase**
+   - Suivez le guide dans `SUPABASE_SETUP.md`
+   - Créez un fichier `.env` avec vos clés Supabase
 
+4. **Démarrer l'application**
    ```bash
-   npx expo start
+   npm start
    ```
 
-In the output, you'll find options to open the app in a
+## 🔧 Configuration Supabase
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Étapes rapides :
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1. **Créer un projet** sur [supabase.com](https://supabase.com)
+2. **Récupérer les clés** dans Settings > API
+3. **Créer le fichier `.env`** :
+   ```env
+   EXPO_PUBLIC_SUPABASE_URL=votre_url_projet
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=votre_clé_anon
+   ```
+4. **Exécuter le script SQL** dans `database/schema.sql`
+5. **Tester la connexion** avec le bouton "Test DB" dans l'app
 
-## Get a fresh project
+### Structure de la base de données :
 
-When you're ready, run:
+- **users** - Profils utilisateurs
+- **events** - Événements sportifs
+- **event_participants** - Participants aux événements
+- **messages** - Messages de chat
+- **user_locations** - Géolocalisation
 
-```bash
-npm run reset-project
+## 📱 Utilisation
+
+### Écrans disponibles :
+
+- **Home** (`/`) - Découverte d'événements
+- **Events** (`/events`) - Calendrier et liste d'événements
+- **Discover** (`/discover`) - Carte des événements
+- **Chat** (`/chat`) - Messages des événements rejoints
+
+### Fonctionnalités clés :
+
+- ✅ **Recherche** d'événements par sport/location
+- ✅ **Filtres** par date et type de sport
+- ✅ **Géolocalisation** pour les événements à proximité
+- ✅ **Chat en temps réel** par événement
+- ✅ **Authentification** email/Google
+- ✅ **Interface responsive** web/mobile
+
+## 🔌 Services Supabase
+
+### Authentification :
+```typescript
+import { AuthService } from '../lib/services/auth';
+
+// Connexion
+await AuthService.signIn('email', 'password');
+await AuthService.signInWithGoogle();
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Événements :
+```typescript
+import { EventService } from '../lib/services/events';
 
-## Learn more
+// Récupérer les événements
+const events = await EventService.getEvents();
 
-To learn more about developing your project with Expo, look at the following resources:
+// Créer un événement
+await EventService.createEvent(eventData);
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Chat :
+```typescript
+import { ChatService } from '../lib/services/chat';
 
-## Join the community
+// Envoyer un message
+await ChatService.sendMessage(eventId, userId, content);
 
-Join our community of developers creating universal apps.
+// Écouter en temps réel
+ChatService.subscribeToMessages(eventId, callback);
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🚨 Dépannage
+
+### Erreur de connexion Supabase :
+- Vérifiez vos clés dans `.env`
+- Assurez-vous que le script SQL a été exécuté
+- Vérifiez les politiques RLS
+
+### Erreur de carte sur le web :
+- Les cartes natives ne sont disponibles que sur mobile
+- L'interface web affiche un message informatif
+
+### Erreur de bundling :
+- Redémarrez le serveur Expo : `npm start`
+- Videz le cache : `npm start -- --clear`
+
+## 📊 Prochaines étapes
+
+1. **Intégrer l'authentification** complète
+2. **Remplacer les données mock** par Supabase
+3. **Ajouter les notifications push**
+4. **Implémenter la géolocalisation avancée**
+5. **Ajouter des statistiques utilisateur**
+
+## 🤝 Contribution
+
+1. Fork le projet
+2. Créez une branche feature
+3. Committez vos changements
+4. Poussez vers la branche
+5. Ouvrez une Pull Request
+
+## 📄 Licence
+
+Ce projet est sous licence MIT.
+
+## 🔗 Liens utiles
+
+- [Documentation Supabase](https://supabase.com/docs)
+- [Guide Expo](https://docs.expo.dev)
+- [NativeWind](https://www.nativewind.dev)
+- [Expo Router](https://expo.github.io/router)
