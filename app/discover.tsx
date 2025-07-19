@@ -159,14 +159,14 @@ export default function Discover() {
           id: event.id,
           title: event.title,
           location: event.location,
-          distance: formatDistance(event.distance_km),
+          distance: formatDistance(parseFloat(event.distance_km) || 0),
           time: formatEventDate(event.date, event.time),
           participants: `${event.current_participants || 0}/${event.max_participants}`,
           color: getSportColor(event.sport_type),
           icon: getSportIcon(event.sport_type),
           coordinate: {
-            latitude: event.latitude,
-            longitude: event.longitude
+            latitude: parseFloat(event.latitude),
+            longitude: parseFloat(event.longitude)
           }
         }));
 
@@ -191,8 +191,8 @@ export default function Discover() {
           color: getSportColor(event.sport_type),
           icon: getSportIcon(event.sport_type),
           coordinate: {
-            latitude: event.latitude,
-            longitude: event.longitude
+            latitude: parseFloat(event.latitude),
+            longitude: parseFloat(event.longitude)
           }
         }));
 
