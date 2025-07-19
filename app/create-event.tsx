@@ -145,12 +145,15 @@ export default function CreateEvent() {
       const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       const formattedTime = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
       
+      // Récupérer les coordonnées géographiques
+      const coordinates = await GeocodingService.getCoordinatesForLocation(location);
+      
       const eventData = {
         title,
         description,
         location,
-        latitude: 48.8566, // Coordonnées par défaut (Paris) - à améliorer avec géolocalisation
-        longitude: 2.3522,
+        latitude: coordinates.latitude,
+        longitude: coordinates.longitude,
         date: formattedDate,
         time: formattedTime,
         sport_type: sportType,

@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Image, SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Platform, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/context/AuthContext';
 import { EventService } from '../../lib/services/events';
 
@@ -112,11 +113,11 @@ export default function EventDetails() {
   // Rediriger vers login si pas connecté
   if (!user) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-900 items-center justify-center">
+      <SafeAreaView className="flex-1" style={{ backgroundColor: '#0f172a' }}>
         <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
         
-        <View className="items-center px-8">
-          <View className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full items-center justify-center mb-6">
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-24 h-24 rounded-full items-center justify-center mb-6" style={{ backgroundColor: '#3b82f6' }}>
             <Text className="text-white font-bold text-4xl">T</Text>
           </View>
           <Text className="text-white text-3xl font-bold mb-4">Connectez-vous</Text>
@@ -125,7 +126,8 @@ export default function EventDetails() {
           </Text>
           
           <TouchableOpacity 
-            className="bg-blue-500 rounded-2xl py-4 px-8 mb-4 w-full"
+            className="rounded-2xl py-4 px-8 mb-4 w-full"
+            style={{ backgroundColor: '#3b82f6' }}
             onPress={() => router.push('/auth/login')}
           >
             <Text className="text-white font-bold text-lg text-center">Se connecter</Text>
@@ -137,7 +139,7 @@ export default function EventDetails() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-900 items-center justify-center">
+      <SafeAreaView className="flex-1 items-center justify-center" style={{ backgroundColor: '#0f172a' }}>
         <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
         <Text className="text-slate-400 text-lg">Chargement...</Text>
       </SafeAreaView>
@@ -146,11 +148,12 @@ export default function EventDetails() {
 
   if (!eventData) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-900 items-center justify-center">
+      <SafeAreaView className="flex-1 items-center justify-center" style={{ backgroundColor: '#0f172a' }}>
         <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
         <Text className="text-slate-400 text-lg">Événement non trouvé</Text>
         <TouchableOpacity 
-          className="bg-blue-500 rounded-2xl py-3 px-6 mt-4"
+          className="rounded-2xl py-3 px-6 mt-4"
+          style={{ backgroundColor: '#3b82f6' }}
           onPress={() => router.back()}
         >
           <Text className="text-white font-semibold">Retour</Text>
@@ -160,39 +163,39 @@ export default function EventDetails() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-900">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: '#0f172a' }}>
       <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
       
       {/* Header */}
-      <View className="flex-row items-center px-4 py-4">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <Ionicons name="arrow-back" size={24} color="white" />
+      <View className="flex-row items-center px-6 py-4" style={{ paddingTop: Platform.OS === 'android' ? 20 : 0 }}>
+        <TouchableOpacity onPress={() => router.back()} className="mr-4 p-2 rounded-full" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+          <Ionicons name="arrow-back" size={24} color="#3b82f6" />
         </TouchableOpacity>
-        <Text className="text-white text-lg font-semibold flex-1">Event Details</Text>
-        <TouchableOpacity>
-          <Ionicons name="share-outline" size={24} color="white" />
+        <Text className="text-white text-xl font-bold flex-1">Détails de l'événement</Text>
+        <TouchableOpacity className="p-2 rounded-full mr-2" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+          <Ionicons name="share-outline" size={22} color="#3b82f6" />
         </TouchableOpacity>
-        <TouchableOpacity className="ml-4">
-          <Ionicons name="heart-outline" size={24} color="white" />
+        <TouchableOpacity className="p-2 rounded-full" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+          <Ionicons name="heart-outline" size={22} color="#3b82f6" />
         </TouchableOpacity>
       </View>
 
       <ScrollView className="flex-1">
         {/* Event Image/Banner */}
         {eventData.image_url ? (
-          <View className="mx-4 mb-6">
+          <View className="mx-6 mb-6">
             <Image 
               source={{ uri: eventData.image_url }} 
-              className="w-full h-48 rounded-2xl"
+              className="w-full h-56 rounded-3xl"
               resizeMode="cover"
             />
           </View>
         ) : (
           <View 
-            className="h-48 mx-4 rounded-2xl items-center justify-center mb-6"
+            className="h-56 mx-6 rounded-3xl items-center justify-center mb-6"
             style={{ backgroundColor: getSportColor(eventData.sport_type || 'Football') }}
           >
-            <Text className="text-white text-6xl opacity-20">
+            <Text className="text-white text-7xl opacity-30">
               {eventData.sport_type === 'Football' ? '⚽' : 
                eventData.sport_type === 'Basketball' ? '🏀' : 
                eventData.sport_type === 'Tennis' ? '🎾' : '🏟️'}
@@ -201,106 +204,123 @@ export default function EventDetails() {
         )}
 
         {/* Event Info */}
-        <View className="px-4 mb-6">
-          <Text className="text-white text-2xl font-bold mb-2">{eventData.title}</Text>
-          <Text className="text-slate-400 text-base mb-4">{eventData.description}</Text>
+        <View className="px-6 mb-6">
+          <Text className="text-white text-3xl font-bold mb-3">{eventData.title}</Text>
+          <Text className="text-slate-400 text-lg leading-6 mb-6">{eventData.description}</Text>
           
-          <View className="bg-slate-800 rounded-2xl p-4 space-y-3">
-            <View className="flex-row items-center">
-              <Ionicons name="calendar" size={20} color="#3b82f6" />
-              <Text className="text-white ml-3 flex-1">{formatEventDate(eventData.date, eventData.time)}</Text>
+          <View className="rounded-3xl p-6" style={{ backgroundColor: '#1e293b' }}>
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-4" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}>
+                <Ionicons name="calendar" size={20} color="#3b82f6" />
+              </View>
+              <Text className="text-white text-lg flex-1">{formatEventDate(eventData.date, eventData.time)}</Text>
             </View>
             
-            <View className="flex-row items-center">
-              <Ionicons name="location" size={20} color="#3b82f6" />
-              <Text className="text-white ml-3 flex-1">{eventData.location}</Text>
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-4" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}>
+                <Ionicons name="location" size={20} color="#3b82f6" />
+              </View>
+              <Text className="text-white text-lg flex-1">{eventData.location}</Text>
             </View>
             
-            <View className="flex-row items-center">
-              <Ionicons name="people" size={20} color="#3b82f6" />
-              <Text className="text-white ml-3 flex-1">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-4" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}>
+                <Ionicons name="people" size={20} color="#3b82f6" />
+              </View>
+              <Text className="text-white text-lg flex-1">
                 {eventData.current_participants}/{eventData.max_participants} participants
               </Text>
             </View>
             
-            <View className="flex-row items-center">
-              <Ionicons name="pricetag" size={20} color="#3b82f6" />
-              <Text className="text-white ml-3 flex-1">
+            <View className="flex-row items-center mb-4">
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-4" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}>
+                <Ionicons name="pricetag" size={20} color="#3b82f6" />
+              </View>
+              <Text className="text-white text-lg flex-1">
                 {eventData.price === 0 ? 'Gratuit' : `${eventData.price}€`}
               </Text>
             </View>
             
             <View className="flex-row items-center">
-              <Ionicons name="fitness" size={20} color="#3b82f6" />
-              <Text className="text-white ml-3 flex-1">{eventData.sport_type}</Text>
+              <View className="w-10 h-10 rounded-full items-center justify-center mr-4" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}>
+                <Ionicons name="fitness" size={20} color="#3b82f6" />
+              </View>
+              <Text className="text-white text-lg flex-1">{eventData.sport_type}</Text>
             </View>
           </View>
         </View>
 
         {/* Organizer */}
-        <View className="px-4 mb-6">
-          <Text className="text-white text-lg font-semibold mb-3">Organizer</Text>
-          <View className="bg-slate-800 rounded-2xl p-4 flex-row items-center">
-            <View className="w-12 h-12 bg-blue-500 rounded-full items-center justify-center mr-3">
-              <Text className="text-white font-bold">
+        <View className="px-6 mb-6">
+          <Text className="text-white text-2xl font-bold mb-4">Organisateur</Text>
+          <View className="rounded-3xl p-5 flex-row items-center" style={{ backgroundColor: '#1e293b' }}>
+            <View className="w-14 h-14 rounded-full items-center justify-center mr-4" style={{ backgroundColor: '#3b82f6' }}>
+              <Text className="text-white font-bold text-lg">
                 {eventData.organizer?.name?.charAt(0) || 'O'}
               </Text>
             </View>
             <View className="flex-1">
-              <Text className="text-white font-semibold">{eventData.organizer?.name || 'Organisateur'}</Text>
-              <Text className="text-slate-400 text-sm">Event Organizer</Text>
+              <Text className="text-white font-bold text-lg">{eventData.organizer?.name || 'Organisateur'}</Text>
+              <Text className="text-slate-400 text-base">Organisateur de l'événement</Text>
             </View>
-            <TouchableOpacity>
+            <TouchableOpacity className="p-3 rounded-full" style={{ backgroundColor: 'rgba(59, 130, 246, 0.2)' }}>
               <Ionicons name="chatbubble-outline" size={20} color="#3b82f6" />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Participants */}
-        <View className="px-4 mb-6">
-          <Text className="text-white text-lg font-semibold mb-3">Participants</Text>
-          <View className="bg-slate-800 rounded-2xl p-4">
+        <View className="px-6 mb-6">
+          <Text className="text-white text-2xl font-bold mb-4">Participants</Text>
+          <View className="rounded-3xl p-5" style={{ backgroundColor: '#1e293b' }}>
             {eventData.participants && eventData.participants.length > 0 ? (
               <>
                 {eventData.participants.slice(0, 4).map((participant: any, index: number) => (
-                  <View key={index} className="flex-row items-center mb-3 last:mb-0">
-                    <View className="w-10 h-10 bg-slate-700 rounded-full items-center justify-center mr-3">
-                      <Text className="text-white">
+                  <View key={index} className={`flex-row items-center ${index < eventData.participants.slice(0, 4).length - 1 ? 'mb-4' : ''}`}>
+                    <View className="w-12 h-12 rounded-full items-center justify-center mr-4" style={{ backgroundColor: '#374151' }}>
+                      <Text className="text-white font-semibold">
                         {participant.user?.name?.charAt(0) || '👤'}
                       </Text>
                     </View>
-                    <Text className="text-white flex-1">{participant.user?.name || 'Participant'}</Text>
+                    <Text className="text-white text-lg flex-1">{participant.user?.name || 'Participant'}</Text>
                   </View>
                 ))}
                 {eventData.participants.length > 4 && (
-                  <TouchableOpacity className="mt-3 pt-3 border-t border-slate-700">
-                    <Text className="text-blue-400 text-center">
+                  <TouchableOpacity className="mt-4 pt-4" style={{ borderTopWidth: 1, borderTopColor: '#374151' }}>
+                    <Text className="text-center text-lg" style={{ color: '#3b82f6' }}>
                       Voir tous les participants ({eventData.participants.length})
                     </Text>
                   </TouchableOpacity>
                 )}
               </>
             ) : (
-              <Text className="text-slate-400 text-center py-4">Aucun participant pour le moment</Text>
+              <Text className="text-slate-400 text-center py-8 text-lg">Aucun participant pour le moment</Text>
             )}
           </View>
         </View>
 
         {/* Bottom spacing */}
-        <View className="h-32" />
+        <View className="h-20" />
       </ScrollView>
 
       {/* Join Button */}
-      <View className="px-4 pb-4">
+      <View className="px-6 pb-6" style={{ paddingBottom: Platform.OS === 'android' ? 20 : 6 }}>
         <TouchableOpacity 
-          className={`bg-blue-500 rounded-2xl py-4 items-center ${isJoining ? 'opacity-50' : ''}`}
-          style={{ backgroundColor: getSportColor(eventData.sport_type || 'Football') }}
+          className={`rounded-3xl py-5 items-center ${isJoining ? 'opacity-50' : ''}`}
+          style={{ 
+            backgroundColor: eventData.current_participants >= eventData.max_participants ? '#6b7280' : getSportColor(eventData.sport_type || 'Football'),
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 8
+          }}
           onPress={handleJoinEvent}
           disabled={isJoining || eventData.current_participants >= eventData.max_participants}
         >
-          <Text className="text-white font-bold text-lg">
-            {isJoining ? 'Joining...' : 
-             eventData.current_participants >= eventData.max_participants ? 'Event Full' : 'Join Event'}
+          <Text className="text-white font-bold text-xl">
+            {isJoining ? 'Inscription en cours...' : 
+             eventData.current_participants >= eventData.max_participants ? 'Événement complet' : 'Rejoindre l\'événement'}
           </Text>
         </TouchableOpacity>
       </View>

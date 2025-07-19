@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
 import { EventService } from '../lib/services/events';
@@ -75,87 +75,39 @@ export default function Index() {
 
   // Événements mock de secours
   const mockEvents = [
-        { 
-          id: 1,
-      title: "Football Match", 
-      description: "Match amical",
+    { 
+      id: 1,
+      title: "Match amical de football", 
+      description: "Match amical entre amis",
       sport_type: "Football",
       date: new Date().toISOString(),
-          time: "Live", 
-          location: "Stadium A",
+      time: "14:30", 
+      location: "3-5 Rue Albert Camus, 91220 Brétigny-sur-Orge",
       max_participants: 22,
       current_participants: 18,
       price: 0,
       organizer_id: "mock",
-      is_active: true
-        },
-        { 
-          id: 2,
-      title: "Basketball Game", 
-      description: "Tournoi local",
+      is_active: true,
+      image_url: null
+    },
+    { 
+      id: 2,
+      title: "Tournoi de Basketball", 
+      description: "Tournoi local de basketball",
       sport_type: "Basketball",
       date: new Date().toISOString(),
-          time: "Live", 
-          location: "Court B",
+      time: "16:00", 
+      location: "Gymnase Municipal",
       max_participants: 16,
       current_participants: 12,
       price: 0,
       organizer_id: "mock",
-      is_active: true
-        }
+      is_active: true,
+      image_url: null
+    }
   ];
 
   const filters = ["All", "Today", "This Week", "Football", "Basketball", "Tennis"];
-
-  // Organiser les événements par catégorie
-  const organizeEventsByCategory = (events: any[]): CategoryDisplay[] => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    const categories: CategoryDisplay[] = [
-    {
-        title: "Events Happening Now",
-        events: events.filter((event: any) => {
-          const eventDate = new Date(event.date);
-          const isToday = eventDate >= today && eventDate < new Date(today.getTime() + 24 * 60 * 60 * 1000);
-          return isToday;
-        }).map((event: any): EventDisplay => ({
-          id: event.id,
-          name: event.title,
-          time: "Live",
-          location: event.location,
-          image: getSportIcon(event.sport_type),
-          color: getSportColor(event.sport_type),
-          isLive: true,
-          participants: `${event.current_participants}/${event.max_participants} players`
-        }))
-      }
-    ];
-
-    // Grouper par sport
-    const sportTypes = [...new Set(events.map((event: any) => event.sport_type))];
-    
-    sportTypes.forEach(sport => {
-      const sportEvents = events.filter((event: any) => event.sport_type === sport);
-      if (sportEvents.length > 0) {
-        categories.push({
-          title: sport,
-          events: sportEvents.map((event: any): EventDisplay => ({
-            id: event.id,
-            name: event.title,
-            time: event.description || "Event",
-            participants: `${event.current_participants}/${event.max_participants} players`,
-            location: event.location,
-            image: getSportIcon(event.sport_type),
-            color: getSportColor(event.sport_type),
-            isLive: false
-          }))
-        });
-      }
-    });
-
-    return categories;
-  };
 
   const getSportIcon = (sport: string) => {
     const icons: { [key: string]: string } = {
@@ -181,59 +133,184 @@ export default function Index() {
     return colors[sport] || '#6b7280';
   };
 
-  const sportsCategories = organizeEventsByCategory(events);
+  const formatEventDate = (date: string, time?: string) => {
+    const eventDate = new Date(date);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
 
-  const filteredCategories = sportsCategories.map((category: CategoryDisplay) => ({
-    ...category,
-    events: category.events.filter((event: EventDisplay) => 
-      event.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      event.location.toLowerCase().includes(searchText.toLowerCase()) ||
-      event.time.toLowerCase().includes(searchText.toLowerCase())
-    )
-  })).filter((category: CategoryDisplay) => category.events.length > 0);
+    let dateStr = '';
+    if (eventDate.toDateString() === today.toDateString()) {
+      dateStr = 'Aujourd\'hui';
+    } else if (eventDate.toDateString() === tomorrow.toDateString()) {
+      dateStr = 'Demain';
+    } else {
+      dateStr = eventDate.toLocaleDateString('fr-FR', { 
+        weekday: 'short', 
+        day: 'numeric', 
+        month: 'short' 
+      });
+    }
 
-  const EventCard = ({ event, isLive = false }: { event: EventDisplay; isLive?: boolean }) => (
-    <Link href={`/events/${event.id}`} asChild>
-      <TouchableOpacity 
-        className="mr-4 rounded-3xl overflow-hidden shadow-lg"
-        style={{ 
-          backgroundColor: event.color,
-          width: isLive ? 160 : 200,
-          height: isLive ? 110 : 140
-        }}
-      >
-        <View className="flex-1 p-4 justify-between relative">
-          {isLive && (
-            <View className="absolute top-3 right-3 bg-red-500 px-2 py-1 rounded-full">
-              <Text className="text-white text-xs font-bold">LIVE</Text>
-            </View>
-          )}
-          
-          <View className="flex-1 justify-between">
-            <View>
-              <Text className="text-white font-bold text-lg mb-1">{event.name}</Text>
-              <Text className="text-white/90 text-sm">{event.time}</Text>
-            </View>
-            
-            <View className="mt-2">
-              <Text className="text-white/80 text-xs">{event.location}</Text>
-              {event.participants && (
-                <Text className="text-white/90 text-xs font-medium mt-1">{event.participants}</Text>
-              )}
+    if (time) {
+      dateStr += ` à ${time}`;
+    }
+
+    return dateStr;
+  };
+
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch = event.title.toLowerCase().includes(searchText.toLowerCase()) ||
+                         event.location.toLowerCase().includes(searchText.toLowerCase()) ||
+                         event.sport_type.toLowerCase().includes(searchText.toLowerCase());
+    
+    if (selectedFilter === "All") return matchesSearch;
+    if (selectedFilter === "Today") {
+      const eventDate = new Date(event.date);
+      const today = new Date();
+      return matchesSearch && eventDate.toDateString() === today.toDateString();
+    }
+    if (selectedFilter === "This Week") {
+      const eventDate = new Date(event.date);
+      const today = new Date();
+      const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+      return matchesSearch && eventDate >= today && eventDate <= weekFromNow;
+    }
+    return matchesSearch && event.sport_type === selectedFilter;
+  });
+
+  // Organiser les événements par catégories
+  const organizeEventsByCategory = () => {
+    const categories = [];
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Événements d'aujourd'hui (Events Happening Now)
+    const todayEvents = filteredEvents.filter((event) => {
+      const eventDate = new Date(event.date);
+      return eventDate.toDateString() === today.toDateString();
+    });
+
+    if (todayEvents.length > 0) {
+      categories.push({
+        title: "Events Happening Now",
+        events: todayEvents
+      });
+    }
+
+    // Grouper par sport
+    const sportTypes = [...new Set(filteredEvents.map((event) => event.sport_type))];
+    
+    sportTypes.forEach(sport => {
+      const sportEvents = filteredEvents.filter((event) => event.sport_type === sport);
+      if (sportEvents.length > 0) {
+        categories.push({
+          title: sport,
+          events: sportEvents
+        });
+      }
+    });
+
+    return categories;
+  };
+
+  const eventCategories = organizeEventsByCategory();
+
+  // Composant pour une carte d'événement
+  const EventCard = ({ event, isCompact = false }: { event: any; isCompact?: boolean }) => (
+    <TouchableOpacity
+      className="rounded-3xl mr-4 overflow-hidden"
+      style={{ 
+        width: isCompact ? 160 : 200,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+        backgroundColor: '#1e293b'
+      }}
+      onPress={() => router.push(`/events/${event.id}`)}
+    >
+      {/* Section image */}
+      <View className="relative" style={{ height: isCompact ? 100 : 120 }}>
+        {/* Image de fond ou couleur du sport */}
+        {event.image_url ? (
+          <Image
+            source={{ uri: event.image_url }}
+            className="w-full h-full"
+            resizeMode="cover"
+          />
+        ) : (
+          <View 
+            className="w-full h-full"
+            style={{ backgroundColor: getSportColor(event.sport_type) }}
+          >
+            {/* Pattern de fond subtil */}
+            <View className="absolute inset-0 opacity-10">
+              <Text className="text-white text-6xl absolute bottom-2 right-2 opacity-30">
+                {getSportIcon(event.sport_type)}
+              </Text>
             </View>
           </View>
-          
-          <View className="absolute bottom-2 right-2 text-4xl opacity-20">
-            <Text style={{ fontSize: 30 }}>{event.image}</Text>
+        )}
+
+        {/* Overlay sombre pour la lisibilité */}
+        <View 
+          className="absolute inset-0"
+          style={{ 
+            backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          }}
+        />
+
+        {/* Titre et badge sur l'image */}
+        <View className="absolute inset-0 p-3 justify-between">
+          <View className="flex-row justify-between items-start">
+            <View className="flex-1">
+              <Text className="text-white font-bold text-lg mb-1" numberOfLines={2}>{event.title}</Text>
+              <Text className="text-white/90 text-sm">{event.sport_type}</Text>
+            </View>
+            {event.price === 0 && (
+              <View className="rounded-full px-2 py-1 ml-2" style={{ backgroundColor: 'rgba(34, 197, 94, 0.9)' }}>
+                <Text className="text-white text-xs font-bold">GRATUIT</Text>
+              </View>
+            )}
           </View>
         </View>
-      </TouchableOpacity>
-    </Link>
+      </View>
+
+      {/* Section informations en bas */}
+      <View className="p-3" style={{ backgroundColor: '#1e293b' }}>
+        {/* Date et heure */}
+        <View className="flex-row items-center mb-2">
+          <Ionicons name="calendar" size={14} color="#3b82f6" />
+          <Text className="text-white text-xs ml-2 font-medium" numberOfLines={1}>
+            {formatEventDate(event.date, event.time)}
+          </Text>
+        </View>
+
+        {/* Localisation */}
+        <View className="flex-row items-center mb-2">
+          <Ionicons name="location" size={14} color="#3b82f6" />
+          <Text className="text-slate-300 text-xs ml-2 flex-1" numberOfLines={1}>
+            {event.location}
+          </Text>
+        </View>
+
+        {/* Participants */}
+        <View className="flex-row items-center">
+          <Ionicons name="people" size={14} color="#3b82f6" />
+          <Text className="text-slate-300 text-xs ml-2">
+            {event.current_participants || 0}/{event.max_participants}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 
-  const CategorySection = ({ category }: { category: CategoryDisplay }) => (
+  // Composant pour une section de catégorie
+  const CategorySection = ({ category }: { category: any }) => (
     <View className="mb-8">
-      <View className="flex-row justify-between items-center mb-4 px-4">
+      <View className="flex-row justify-between items-center mb-4 px-6">
         <Text className="text-white text-xl font-bold">{category.title}</Text>
         <TouchableOpacity>
           <Text className="text-blue-400 text-sm font-medium">See All</Text>
@@ -244,11 +321,11 @@ export default function Index() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16 }}
       >
-        {category.events.map((event: EventDisplay) => (
+        {category.events.map((event: any) => (
           <EventCard 
             key={event.id} 
             event={event} 
-            isLive={category.title === "Events Happening Now"}
+            isCompact={category.title === "Events Happening Now"}
           />
         ))}
       </ScrollView>
@@ -258,11 +335,11 @@ export default function Index() {
   // Rediriger vers login si pas connecté
   if (!user) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-900 items-center justify-center">
+      <SafeAreaView className="flex-1" style={{ backgroundColor: '#0f172a' }}>
         <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
         
-        <View className="items-center px-8">
-          <View className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full items-center justify-center mb-6">
+        <View className="flex-1 items-center justify-center px-8">
+          <View className="w-24 h-24 rounded-full items-center justify-center mb-6" style={{ backgroundColor: '#3b82f6' }}>
             <Text className="text-white font-bold text-4xl">T</Text>
           </View>
           <Text className="text-white text-3xl font-bold mb-4">TeamUp!</Text>
@@ -271,13 +348,13 @@ export default function Index() {
           </Text>
           
           <Link href="/auth/login" asChild>
-            <TouchableOpacity className="bg-blue-500 rounded-2xl py-4 px-8 mb-4 w-full">
+            <TouchableOpacity className="rounded-2xl py-4 px-8 mb-4 w-full" style={{ backgroundColor: '#3b82f6' }}>
               <Text className="text-white font-bold text-lg text-center">Se connecter</Text>
             </TouchableOpacity>
           </Link>
           
           <Link href="/auth/signup" asChild>
-            <TouchableOpacity className="bg-slate-800 rounded-2xl py-4 px-8 w-full border border-slate-700">
+            <TouchableOpacity className="rounded-2xl py-4 px-8 w-full border" style={{ backgroundColor: '#1e293b', borderColor: '#374151' }}>
               <Text className="text-white font-medium text-lg text-center">Créer un compte</Text>
             </TouchableOpacity>
           </Link>
@@ -287,30 +364,30 @@ export default function Index() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#141A1F]">
-      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
+    <SafeAreaView className="flex-1" style={{ backgroundColor: '#0f172a' }}>
+      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
       
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-4 bg-[#141A1F]">
-        <Text className="text-[#FFFFFF] text-2xl font-bold">TeamUp</Text>
+      <View className="flex-row items-center justify-between px-6 py-4">
+        <Text className="text-white text-3xl font-bold">TeamUp</Text>
         <View className="flex-row space-x-4">
-          <TouchableOpacity onPress={testSupabaseConnection}>
-            <Ionicons name="cloud-outline" size={24} color={isConnected ? "#C4D9EB" : "#9EB0BD"} />
+          <TouchableOpacity onPress={testSupabaseConnection} className="p-2 rounded-full" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+            <Ionicons name="cloud-outline" size={24} color={isConnected ? "#3b82f6" : "#64748b"} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => signOut()}>
-            <Ionicons name="log-out-outline" size={24} color="#9EB0BD" />
+          <TouchableOpacity onPress={handleSignOut} className="p-2 rounded-full" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+            <Ionicons name="log-out-outline" size={24} color="#3b82f6" />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Search Bar */}
-      <View className="px-4 py-2">
-        <View className="bg-[#2B3840] rounded-2xl px-4 py-3 flex-row items-center border border-[#2B3840]">
-          <Ionicons name="search" size={20} color="#9EB0BD" />
+      <View className="px-6 py-2">
+        <View className="rounded-3xl px-6 py-4 flex-row items-center" style={{ backgroundColor: '#1e293b' }}>
+          <Ionicons name="search" size={20} color="#64748b" />
           <TextInput
-            className="flex-1 ml-3 text-[#FFFFFF] text-base"
+            className="flex-1 ml-3 text-white text-lg"
             placeholder="Rechercher des événements..."
-            placeholderTextColor="#9EB0BD"
+            placeholderTextColor="#64748b"
             value={searchText}
             onChangeText={setSearchText}
           />
@@ -318,18 +395,21 @@ export default function Index() {
       </View>
 
       {/* Filter Buttons */}
-      <View className="px-4 py-2">
+      <View className="px-6 py-2">
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {filters.map((filter) => (
             <TouchableOpacity
               key={filter}
               onPress={() => setSelectedFilter(filter)}
-              className={`mr-3 px-4 py-2 rounded-full ${
-                selectedFilter === filter ? 'bg-[#C4D9EB]' : 'bg-[#2B3840]'
+              className={`mr-3 px-6 py-3 rounded-full ${
+                selectedFilter === filter ? '' : ''
               }`}
+              style={{
+                backgroundColor: selectedFilter === filter ? '#3b82f6' : '#1e293b'
+              }}
             >
-              <Text className={`font-medium ${
-                selectedFilter === filter ? 'text-[#141A1F]' : 'text-[#9EB0BD]'
+              <Text className={`font-semibold ${
+                selectedFilter === filter ? 'text-white' : 'text-slate-400'
               }`}>
                 {filter}
               </Text>
@@ -339,96 +419,65 @@ export default function Index() {
       </View>
 
       {/* Events List */}
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
         {loading ? (
           <View className="flex-1 justify-center items-center py-20">
-            <Text className="text-[#9EB0BD] text-lg">Chargement des événements...</Text>
+            <Text className="text-slate-400 text-lg">Chargement des événements...</Text>
           </View>
-        ) : events.length === 0 ? (
+        ) : eventCategories.length === 0 ? (
           <View className="flex-1 justify-center items-center py-20">
-            <Ionicons name="calendar-outline" size={64} color="#9EB0BD" />
-            <Text className="text-[#9EB0BD] text-lg font-medium mt-4 mb-2">Aucun événement trouvé</Text>
-            <Text className="text-[#9EB0BD] text-center">Créez votre premier événement pour commencer</Text>
+            <Ionicons name="calendar-outline" size={64} color="#64748b" />
+            <Text className="text-slate-400 text-lg font-medium mt-4 mb-2">Aucun événement trouvé</Text>
+            <Text className="text-slate-400 text-center">Créez votre premier événement pour commencer</Text>
             <TouchableOpacity 
-              className="bg-[#C4D9EB] rounded-2xl px-6 py-3 mt-6"
+              className="rounded-3xl px-6 py-3 mt-6"
+              style={{ backgroundColor: '#3b82f6' }}
               onPress={() => router.push('/create-event')}
             >
-              <Text className="text-[#141A1F] font-semibold">Créer un événement</Text>
+              <Text className="text-white font-semibold">Créer un événement</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View className="pb-4">
-            {events.map((event) => (
-              <TouchableOpacity
-                key={event.id}
-                className="bg-[#2B3840] rounded-2xl p-4 mb-4 border border-[#2B3840]"
-                onPress={() => router.push(`/events/${event.id}`)}
-              >
-                <View className="flex-row items-center mb-2">
-                  <View className="w-12 h-12 bg-[#C4D9EB] rounded-full items-center justify-center mr-3">
-                    <Text className="text-[#141A1F] font-bold text-lg">
-                      {event.sport?.charAt(0) || 'E'}
-                    </Text>
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-[#FFFFFF] font-bold text-lg">{event.title}</Text>
-                    <Text className="text-[#9EB0BD] text-sm">{event.sport}</Text>
-                  </View>
-                  <View className="items-end">
-                    <Text className="text-[#C4D9EB] font-medium">{event.date}</Text>
-                    <Text className="text-[#9EB0BD] text-sm">{event.time}</Text>
-                  </View>
-                </View>
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center">
-                    <Ionicons name="location-outline" size={16} color="#9EB0BD" />
-                    <Text className="text-[#9EB0BD] text-sm ml-1">{event.location}</Text>
-                  </View>
-                  <View className="flex-row items-center">
-                    <Ionicons name="people-outline" size={16} color="#9EB0BD" />
-                    <Text className="text-[#9EB0BD] text-sm ml-1">
-                      {event.participants_count || 0}/{event.max_participants || 'Illimité'}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+            {eventCategories.map((category, index) => (
+              <CategorySection key={index} category={category} />
             ))}
           </View>
         )}
       </ScrollView>
 
       {/* Bottom Navigation */}
-      <SafeAreaView edges={['bottom']} className="bg-[#141A1F]">
-        <View className="bg-[#2B3840] flex-row justify-around items-center py-2 px-2 border-t border-[#2B3840]">
+      <SafeAreaView edges={['bottom']}>
+        <View className="flex-row justify-around items-center py-3 px-2" style={{ backgroundColor: '#1e293b' }}>
           <TouchableOpacity className="items-center">
-            <Ionicons name="home" size={24} color="#C4D9EB" />
-            <Text className="text-[#C4D9EB] text-xs mt-1 font-medium">Home</Text>
+            <Ionicons name="home" size={24} color="#3b82f6" />
+            <Text className="text-blue-400 text-xs mt-1 font-medium">Home</Text>
           </TouchableOpacity>
           <Link href="/events" asChild>
             <TouchableOpacity className="items-center">
-              <Ionicons name="calendar-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Events</Text>
-          </TouchableOpacity>
-        </Link>
-        <Link href="/discover" asChild>
-          <TouchableOpacity className="items-center">
-              <Ionicons name="location-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Discover</Text>
-          </TouchableOpacity>
-        </Link>
-        <Link href="/chat" asChild>
-          <TouchableOpacity className="items-center">
-              <Ionicons name="chatbubble-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Chat</Text>
-          </TouchableOpacity>
-        </Link>
-          <Link href="/profile" asChild>
-        <TouchableOpacity className="items-center">
-              <Ionicons name="person-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Profile</Text>
-        </TouchableOpacity>
+              <Ionicons name="calendar-outline" size={24} color="#64748b" />
+              <Text className="text-slate-400 text-xs mt-1">Events</Text>
+            </TouchableOpacity>
           </Link>
-      </View>
+          <Link href="/discover" asChild>
+            <TouchableOpacity className="items-center">
+              <Ionicons name="location-outline" size={24} color="#64748b" />
+              <Text className="text-slate-400 text-xs mt-1">Discover</Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/chat" asChild>
+            <TouchableOpacity className="items-center">
+              <Ionicons name="chatbubble-outline" size={24} color="#64748b" />
+              <Text className="text-slate-400 text-xs mt-1">Chat</Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/profile" asChild>
+            <TouchableOpacity className="items-center">
+              <Ionicons name="person-outline" size={24} color="#64748b" />
+              <Text className="text-slate-400 text-xs mt-1">Profile</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
       </SafeAreaView>
     </SafeAreaView>
   );

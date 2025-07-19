@@ -4,6 +4,8 @@ import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, Dimensions, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../lib/context/AuthContext';
+import { supabase } from '../lib/supabase';
 import ConditionalMap from './components/ConditionalMap';
 
 interface EventType {
@@ -34,6 +36,9 @@ export default function Discover() {
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   const [userLocation, setUserLocation] = useState<LocationType | null>(null);
   const [mapRef, setMapRef] = useState<any>(null);
+  const [events, setEvents] = useState<EventType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   // Position initiale (Paris par exemple)
   const initialRegion = {
@@ -43,85 +48,171 @@ export default function Discover() {
     longitudeDelta: 0.0421,
   };
 
-  const nearbyEvents = [
-    {
-      id: 1,
-      title: "Football Match",
-      location: "Central Park",
-      distance: "0.5 km",
-      time: "Today 6:00 PM",
-      participants: "12/22 players",
-      color: "#22c55e",
-      icon: "⚽",
-      coordinate: {
-        latitude: 48.8606,
-        longitude: 2.3522,
-      }
-    },
-    {
-      id: 2,
-      title: "Basketball Tournament",
-      location: "Sports Center",
-      distance: "1.2 km",
-      time: "Tomorrow 2:00 PM",
-      participants: "8/16 players",
-      color: "#f59e0b",
-      icon: "🏀",
-      coordinate: {
-        latitude: 48.8546,
-        longitude: 2.3502,
-      }
-    },
-    {
-      id: 3,
-      title: "Tennis Match",
-      location: "Tennis Club",
-      distance: "2.1 km",
-      time: "Dec 25, 10:00 AM",
-      participants: "4/8 players",
-      color: "#0891b2",
-      icon: "🎾",
-      coordinate: {
-        latitude: 48.8586,
-        longitude: 2.3542,
-      }
-    },
-    {
-      id: 4,
-      title: "Running Group",
-      location: "City Park",
-      distance: "3.5 km",
-      time: "Every Monday 7:00 AM",
-      participants: "15+ runners",
-      color: "#d97706",
-      icon: "🏃‍♂️",
-      coordinate: {
-        latitude: 48.8526,
-        longitude: 2.3482,
-      }
-    },
-    {
-      id: 5,
-      title: "Cycling Tour",
-      location: "River Trail",
-      distance: "4.2 km",
-      time: "Saturday 9:00 AM",
-      participants: "20+ cyclists",
-      color: "#16a34a",
-      icon: "🚴‍♂️",
-      coordinate: {
-        latitude: 48.8596,
-        longitude: 2.3562,
-      }
-    }
-  ];
+  // Fonction pour obtenir la couleur selon le sport
+  const getSportColor = (sportType: string) => {
+    const colors: { [key: string]: string } = {
+      'Football': '#22c55e',
+      'Basketball': '#f59e0b',
+      'Tennis': '#0891b2',
+      'Running': '#d97706',
+      'Cycling': '#16a34a',
+      'Swimming': '#06b6d4',
+      'Volleyball': '#8b5cf6',
+      'Badminton': '#ec4899',
+      'Padel': '#10b981',
+      'default': '#6b7280'
+    };
+    return colors[sportType] || colors.default;
+  };
 
-  // Demander la permission de géolocalisation
+  // Fonction pour obtenir l'icône selon le sport
+  const getSportIcon = (sportType: string) => {
+    const icons: { [key: string]: string } = {
+      'Football': '⚽',
+      'Basketball': '🏀',
+      'Tennis': '🎾',
+      'Running': '🏃‍♂️',
+      'Cycling': '🚴‍♂️',
+      'Swimming': '🏊‍♂️',
+      'Volleyball': '🏐',
+      'Badminton': '🏸',
+      'Padel': '🎾',
+      'default': '🏃‍♂️'
+    };
+    return icons[sportType] || icons.default;
+  };
+
+  // Fonction pour calculer la distance entre deux points
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Rayon de la Terre en km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const distance = R * c;
+    return distance;
+  };
+
+  // Fonction pour formater la distance
+  const formatDistance = (distance: number) => {
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m`;
+    } else {
+      return `${distance.toFixed(1)}km`;
+    }
+  };
+
+  // Fonction pour formater la date
+  const formatEventDate = (date: string, time: string) => {
+    const eventDate = new Date(date + 'T' + time);
+    const now = new Date();
+    const diffTime = eventDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      return `Aujourd'hui ${time}`;
+    } else if (diffDays === 1) {
+      return `Demain ${time}`;
+    } else if (diffDays < 7) {
+      return `${eventDate.toLocaleDateString('fr-FR', { weekday: 'long' })} ${time}`;
+    } else {
+      return eventDate.toLocaleDateString('fr-FR', { 
+        day: 'numeric', 
+        month: 'short' 
+      }) + ` ${time}`;
+    }
+  };
+
+  // Récupérer les événements depuis Supabase
+  const fetchEvents = async () => {
+    try {
+      setLoading(true);
+      
+      let query = supabase
+        .from('events')
+        .select('*')
+        .eq('status', 'active')
+        .gte('date', new Date().toISOString().split('T')[0])
+        .not('latitude', 'is', null)
+        .not('longitude', 'is', null)
+        .order('date', { ascending: true });
+
+      // Si on a la position utilisateur, utiliser la fonction géospatiale
+      if (userLocation) {
+        const { data, error } = await supabase
+          .rpc('get_events_within_radius', {
+            user_lat: userLocation.latitude,
+            user_lon: userLocation.longitude,
+            radius_km: 50 // Rayon de 50km
+          });
+
+        if (error) {
+          console.error('Erreur lors de la récupération des événements:', error);
+          return;
+        }
+
+        // Transformer les données pour la carte
+        const transformedEvents: EventType[] = data.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          location: event.location,
+          distance: formatDistance(event.distance),
+          time: formatEventDate(event.date, event.time),
+          participants: `${event.current_participants || 0}/${event.max_participants}`,
+          color: getSportColor(event.sport_type),
+          icon: getSportIcon(event.sport_type),
+          coordinate: {
+            latitude: event.latitude,
+            longitude: event.longitude
+          }
+        }));
+
+        setEvents(transformedEvents);
+      } else {
+        // Fallback sans géolocalisation
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Erreur lors de la récupération des événements:', error);
+          return;
+        }
+
+        // Transformer les données pour la carte
+        const transformedEvents: EventType[] = data.map((event: any) => ({
+          id: event.id,
+          title: event.title,
+          location: event.location,
+          distance: "Distance inconnue",
+          time: formatEventDate(event.date, event.time),
+          participants: `${event.current_participants || 0}/${event.max_participants}`,
+          color: getSportColor(event.sport_type),
+          icon: getSportIcon(event.sport_type),
+          coordinate: {
+            latitude: event.latitude,
+            longitude: event.longitude
+          }
+        }));
+
+        setEvents(transformedEvents);
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Demander la permission de géolocalisation et récupérer les événements
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Permission refusée', 'Permission de géolocalisation refusée');
+        // Continuer sans géolocalisation
+        fetchEvents();
         return;
       }
 
@@ -130,8 +221,19 @@ export default function Discover() {
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       });
+
+      // Mettre à jour la région initiale avec la position utilisateur
+      initialRegion.latitude = location.coords.latitude;
+      initialRegion.longitude = location.coords.longitude;
     })();
   }, []);
+
+  // Récupérer les événements quand la position utilisateur est disponible
+  useEffect(() => {
+    if (userLocation) {
+      fetchEvents();
+    }
+  }, [userLocation]);
 
   // Fonction pour centrer sur la position utilisateur
   const centerOnUserLocation = () => {
@@ -230,40 +332,46 @@ export default function Discover() {
         // Liste des événements
         <ScrollView className="flex-1 bg-[#141A1F]">
           <View className="p-4">
-            {nearbyEvents.map((event) => (
-              <Link key={event.id} href={`/events/${event.id}`} asChild>
-                <TouchableOpacity className="bg-[#2B3840] rounded-2xl p-4 mb-3">
-                  <View className="flex-row items-center">
-                    <View 
-                      className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
-                      style={{ backgroundColor: event.color }}
-                    >
-                      <Text style={{ fontSize: 24 }}>{event.icon}</Text>
-                    </View>
-                    
-                    <View className="flex-1">
-                      <Text className="text-[#FFFFFF] font-bold text-lg">{event.title}</Text>
-                      <View className="flex-row items-center mt-1">
-                        <Ionicons name="location" size={14} color="#9EB0BD" />
-                        <Text className="text-[#9EB0BD] text-sm ml-1">{event.location}</Text>
-                        <Text className="text-[#C4D9EB] text-sm ml-2">• {event.distance}</Text>
+            {loading ? (
+              <Text className="text-[#9EB0BD] text-center py-8">Loading events...</Text>
+            ) : events.length === 0 ? (
+              <Text className="text-[#9EB0BD] text-center py-8">No events found nearby.</Text>
+            ) : (
+              events.map((event) => (
+                <Link key={event.id} href={`/events/${event.id}`} asChild>
+                  <TouchableOpacity className="bg-[#2B3840] rounded-2xl p-4 mb-3">
+                    <View className="flex-row items-center">
+                      <View 
+                        className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
+                        style={{ backgroundColor: event.color }}
+                      >
+                        <Text style={{ fontSize: 24 }}>{event.icon}</Text>
                       </View>
-                      <Text className="text-[#9EB0BD] text-sm mt-1">{event.time}</Text>
-                      <Text className="text-[#FFFFFF] text-sm mt-1">{event.participants}</Text>
+                      
+                      <View className="flex-1">
+                        <Text className="text-[#FFFFFF] font-bold text-lg">{event.title}</Text>
+                        <View className="flex-row items-center mt-1">
+                          <Ionicons name="location" size={14} color="#9EB0BD" />
+                          <Text className="text-[#9EB0BD] text-sm ml-1">{event.location}</Text>
+                          <Text className="text-[#C4D9EB] text-sm ml-2">• {event.distance}</Text>
+                        </View>
+                        <Text className="text-[#9EB0BD] text-sm mt-1">{event.time}</Text>
+                        <Text className="text-[#FFFFFF] text-sm mt-1">{event.participants}</Text>
+                      </View>
+                      
+                      <Ionicons name="chevron-forward" size={20} color="#9EB0BD" />
                     </View>
-                    
-                    <Ionicons name="chevron-forward" size={20} color="#9EB0BD" />
-                  </View>
-                </TouchableOpacity>
-              </Link>
-            ))}
+                  </TouchableOpacity>
+                </Link>
+              ))
+            )}
           </View>
         </ScrollView>
       ) : (
         // Vue carte
         <View className="flex-1 relative">
           <ConditionalMap
-            events={nearbyEvents}
+            events={events}
             onMarkerPress={(event) => setSelectedEvent(event)}
             initialRegion={initialRegion}
             mapRef={mapRef}
