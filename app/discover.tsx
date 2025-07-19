@@ -143,9 +143,9 @@ export default function Discover() {
       // Si on a la position utilisateur, utiliser la fonction géospatiale
       if (userLocation) {
         const { data, error } = await supabase
-          .rpc('get_events_within_radius', {
-            user_lat: userLocation.latitude,
-            user_lon: userLocation.longitude,
+          .rpc('events_nearby', {
+            lat: userLocation.latitude,
+            lng: userLocation.longitude,
             radius_km: 50 // Rayon de 50km
           });
 
@@ -159,7 +159,7 @@ export default function Discover() {
           id: event.id,
           title: event.title,
           location: event.location,
-          distance: formatDistance(event.distance),
+          distance: formatDistance(event.distance_km),
           time: formatEventDate(event.date, event.time),
           participants: `${event.current_participants || 0}/${event.max_participants}`,
           color: getSportColor(event.sport_type),
