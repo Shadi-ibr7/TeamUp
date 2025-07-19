@@ -1,3 +1,7 @@
+-- ======================================
+-- SCHÉMA COMPLET SANS POLITIQUES DE STOCKAGE
+-- ======================================
+
 -- Activer les extensions nécessaires pour la géolocalisation
 create extension if not exists cube;
 create extension if not exists earthdistance;
@@ -290,30 +294,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ======================================
--- NOTE : LES POLITIQUES DE STOCKAGE DOIVENT ÊTRE CONFIGURÉES MANUELLEMENT
--- ======================================
--- 
--- Pour éviter les erreurs de permissions, configurez les politiques via l'interface Supabase :
--- 
--- 1. Allez dans Supabase Dashboard → Storage → Policies
--- 2. Cliquez sur le bucket "avatars"
--- 3. Ajoutez ces 3 politiques manuellement :
---
--- Politique 1 : "Users manage own avatars"
--- - Operation : ALL
--- - Policy definition : bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]
---
--- Politique 2 : "Public avatar access"
--- - Operation : SELECT
--- - Policy definition : bucket_id = 'avatars'
---
--- Politique 3 : "Authenticated users manage event images"
--- - Operation : ALL
--- - Policy definition : bucket_id = 'avatars' AND auth.role() = 'authenticated'
---
--- ======================================
-
 -- Trigger pour créer automatiquement un profil utilisateur
 DO $$
 BEGIN
@@ -322,4 +302,7 @@ BEGIN
       AFTER INSERT ON auth.users
       FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
   END IF;
-END $$; 
+END $$;
+
+-- Message de confirmation
+SELECT 'Schéma créé avec succès! Configurez les politiques de stockage via l''interface Supabase.' as status; 

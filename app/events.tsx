@@ -1,13 +1,84 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
-import { useState } from "react";
-import { SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { Link, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Image, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuth } from '../lib/context/AuthContext';
+import { EventService } from '../lib/services/events';
+
+// Fonctions utilitaires
+const getSportIcon = (sport: string) => {
+  const icons: { [key: string]: string } = {
+    'Football': '⚽',
+    'Basketball': '🏀',
+    'Tennis': '🎾',
+    'Running': '🏃‍♂️',
+    'Cycling': '🚴‍♂️',
+    'Swimming': '🏊‍♂️'
+  };
+  return icons[sport] || '🏟️';
+};
+
+const getSportColor = (sport: string) => {
+  const colors: { [key: string]: string } = {
+    'Football': '#4CAF50',
+    'Basketball': '#FF9800',
+    'Tennis': '#2196F3',
+    'Running': '#d97706',
+    'Cycling': '#16a34a',
+    'Swimming': '#0284c7'
+  };
+  return colors[sport] || '#6b7280';
+};
+
+const formatEventDate = (date: string, time?: string) => {
+  const eventDate = new Date(date);
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  const isToday = eventDate.toDateString() === today.toDateString();
+  const isTomorrow = eventDate.toDateString() === tomorrow.toDateString();
+
+  if (isToday) {
+    return `Aujourd'hui ${time || ''}`;
+  } else if (isTomorrow) {
+    return `Demain ${time || ''}`;
+  } else {
+    return `${eventDate.toLocaleDateString('fr-FR')} ${time || ''}`;
+  }
+};
 
 export default function Events() {
   const [activeTab, setActiveTab] = useState("events"); // "events" ou "calendar"
   const [selectedDate, setSelectedDate] = useState(5);
   const [currentMonth, setCurrentMonth] = useState("October");
   const [currentYear, setCurrentYear] = useState("2024");
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('All');
+
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      const eventsData = await EventService.getEvents();
+      setEvents(eventsData || []);
+    } catch (error) {
+      console.error('Erreur lors du chargement des événements:', error);
+      // Garder les événements mock en cas d'erreur
+      setEvents(mockUpcomingEvents);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Données du calendrier pour octobre 2024
   const calendarDays = [
@@ -21,38 +92,50 @@ export default function Events() {
 
   const daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"];
 
-  const upcomingEvents = [
+  // Events mock de secours
+  const mockUpcomingEvents = [
     {
       id: 1,
       title: "Football Championship",
       date: "Today, 6:00 PM",
       location: "Central Stadium",
-      participants: "22 players",
-      color: "#4CAF50",
-      icon: "⚽"
+      current_participants: 22,
+      max_participants: 24,
+      sport_type: "Football"
     },
     {
       id: 2,
       title: "Basketball Tournament",
       date: "Tomorrow, 2:00 PM",
       location: "Sports Center",
-      participants: "16 players",
-      color: "#FF9800",
-      icon: "🏀"
+      current_participants: 16,
+      max_participants: 20,
+      sport_type: "Basketball"
     },
     {
       id: 3,
       title: "Tennis Singles",
       date: "Dec 25, 10:00 AM",
       location: "Tennis Club",
-      participants: "8 players",
-      color: "#2196F3",
-      icon: "🎾"
+      current_participants: 8,
+      max_participants: 12,
+      sport_type: "Tennis"
     }
   ];
 
-  // Événements par date pour le calendrier
-  const eventsByDate = {
+  // Convertir les événements Supabase en format pour l'affichage
+  const upcomingEvents = events.map(event => ({
+    id: event.id,
+    title: event.title,
+    date: formatEventDate(event.date, event.time),
+    location: event.location,
+    participants: `${event.current_participants}/${event.max_participants} players`,
+    color: getSportColor(event.sport_type),
+    icon: getSportIcon(event.sport_type)
+  }));
+
+  // Événements par date pour le calendrier (garder mock pour l'instant)
+  const eventsByDate: { [key: number]: any[] } = {
     5: [
       {
         id: 1,
@@ -125,7 +208,7 @@ export default function Events() {
 
   const selectedEvents = eventsByDate[selectedDate] || [];
 
-  const navigateMonth = (direction) => {
+  const navigateMonth = (direction: 'next' | 'prev') => {
     const months = [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
@@ -154,7 +237,7 @@ export default function Events() {
     setSelectedDate(1);
   };
 
-  const EventCard = ({ event, showTime = false }) => (
+  const EventCard = ({ event, showTime = false }: { event: any; showTime?: boolean }) => (
     <Link href={`/events/${event.id}`} asChild>
       <TouchableOpacity className="bg-slate-800 rounded-2xl p-4 mb-4">
         <View className="flex-row items-center">
@@ -176,7 +259,7 @@ export default function Events() {
     </Link>
   );
 
-  const CalendarEventCard = ({ event }) => (
+  const CalendarEventCard = ({ event }: { event: any }) => (
     <Link href={`/events/${event.id}`} asChild>
       <TouchableOpacity className="bg-slate-800 rounded-2xl p-4 mb-3 border border-slate-700">
         <View className="flex-row items-center">
@@ -205,210 +288,186 @@ export default function Events() {
     </Link>
   );
 
+  const filters = ['All', 'Upcoming', 'My Events', 'Past'];
+
+  // Rediriger vers login si pas connecté
+  if (!user) {
+    return (
+      <SafeAreaView className="flex-1 bg-slate-900 items-center justify-center">
+        <View className="items-center px-8">
+          <View className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full items-center justify-center mb-6">
+            <Text className="text-white font-bold text-4xl">T</Text>
+          </View>
+          <Text className="text-white text-3xl font-bold mb-4">Connectez-vous</Text>
+          <Text className="text-slate-400 text-center mb-8">
+            Vous devez être connecté pour voir vos événements
+          </Text>
+          
+          <Link href="/auth/login" asChild>
+            <TouchableOpacity className="bg-blue-500 rounded-2xl py-4 px-8 mb-4 w-full">
+              <Text className="text-white font-bold text-lg text-center">Se connecter</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-slate-900">
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+    <SafeAreaView className="flex-1 bg-[#141A1F]">
+      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
       
       {/* Header */}
-      <View className="flex-row justify-between items-center px-4 py-4">
-        <Text className="text-white text-2xl font-bold">
-          {activeTab === "events" ? "Events" : "Sports Events"}
-        </Text>
-        <TouchableOpacity>
-          <Ionicons name={activeTab === "events" ? "add-circle-outline" : "options-outline"} size={28} color="white" />
+      <View className="flex-row items-center justify-between px-4 py-4 bg-[#141A1F]">
+        <Text className="text-[#FFFFFF] text-2xl font-bold">Événements</Text>
+        <TouchableOpacity onPress={() => router.push('/create-event')}>
+          <Ionicons name="add-circle-outline" size={28} color="#C4D9EB" />
         </TouchableOpacity>
       </View>
 
-      {/* Tabs */}
-      <View className="flex-row mx-4 mb-4">
-        <TouchableOpacity 
-          onPress={() => setActiveTab("events")}
-          className={`flex-1 py-3 rounded-2xl mr-2 ${
-            activeTab === "events" ? 'bg-blue-500' : 'bg-slate-800'
-          }`}
-        >
-          <Text className={`text-center font-medium ${
-            activeTab === "events" ? 'text-white' : 'text-slate-400'
-          }`}>
-            Events
-          </Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          onPress={() => setActiveTab("calendar")}
-          className={`flex-1 py-3 rounded-2xl ml-2 ${
-            activeTab === "calendar" ? 'bg-blue-500' : 'bg-slate-800'
-          }`}
-        >
-          <Text className={`text-center font-medium ${
-            activeTab === "calendar" ? 'text-white' : 'text-slate-400'
-          }`}>
-            Calendar
-          </Text>
-        </TouchableOpacity>
+      {/* Search Bar */}
+      <View className="px-4 py-2">
+        <View className="bg-[#2B3840] rounded-2xl px-4 py-3 flex-row items-center border border-[#2B3840]">
+          <Ionicons name="search" size={20} color="#9EB0BD" />
+          <TextInput
+            className="flex-1 ml-3 text-[#FFFFFF] text-base"
+            placeholder="Rechercher des événements..."
+            placeholderTextColor="#9EB0BD"
+            value={searchText}
+            onChangeText={setSearchText}
+          />
+        </View>
       </View>
 
-      {/* Content basé sur l'onglet actif */}
-      {activeTab === "events" ? (
-        // Vue Events
-        <>
-          {/* Sub-tabs pour Events */}
-          <View className="flex-row mx-4 mb-4">
-            <TouchableOpacity className="bg-blue-500 px-4 py-2 rounded-full mr-3">
-              <Text className="text-white font-medium">Upcoming</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="bg-slate-800 px-4 py-2 rounded-full mr-3">
-              <Text className="text-slate-400 font-medium">My Events</Text>
-            </TouchableOpacity>
-            <TouchableOpacity className="bg-slate-800 px-4 py-2 rounded-full">
-              <Text className="text-slate-400 font-medium">Past</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Events List */}
-          <ScrollView className="flex-1 px-4">
-            {upcomingEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </ScrollView>
-        </>
-      ) : (
-        // Vue Calendar
-        <>
-          {/* Calendar Navigation */}
-          <View className="flex-row justify-between items-center px-4 py-4">
-            <TouchableOpacity onPress={() => navigateMonth('prev')}>
-              <Ionicons name="chevron-back" size={24} color="white" />
-            </TouchableOpacity>
-            
-            <Text className="text-white text-xl font-semibold">
-              {currentMonth} {currentYear}
-            </Text>
-            
-            <TouchableOpacity onPress={() => navigateMonth('next')}>
-              <Ionicons name="chevron-forward" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Days of Week Header */}
-          <View className="flex-row justify-around px-4 py-2">
-            {daysOfWeek.map((day, index) => (
-              <View key={index} className="w-10 h-10 items-center justify-center">
-                <Text className="text-slate-400 font-medium text-sm">{day}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Calendar Grid */}
-          <View className="px-4 mb-6">
-            {[0, 1, 2, 3, 4, 5].map((week) => (
-              <View key={week} className="flex-row justify-around mb-2">
-                {[0, 1, 2, 3, 4, 5, 6].map((day) => {
-                  const dayIndex = week * 7 + day;
-                  const calendarDay = calendarDays[dayIndex];
-                  
-                  if (calendarDay === null || calendarDay === undefined) {
-                    return <View key={dayIndex} className="w-10 h-10" />;
-                  }
-                  
-                  const isSelected = calendarDay === selectedDate;
-                  const hasEvents = eventsByDate[calendarDay] && eventsByDate[calendarDay].length > 0;
-                  
-                  return (
-                    <TouchableOpacity
-                      key={dayIndex}
-                      onPress={() => setSelectedDate(calendarDay)}
-                      className={`w-10 h-10 rounded-full items-center justify-center ${
-                        isSelected 
-                          ? 'bg-blue-500' 
-                          : hasEvents 
-                          ? 'bg-slate-700' 
-                          : 'bg-transparent'
-                      }`}
-                    >
-                      <Text className={`font-medium text-base ${
-                        isSelected 
-                          ? 'text-white' 
-                          : hasEvents 
-                          ? 'text-white' 
-                          : 'text-slate-300'
-                      }`}>
-                        {calendarDay}
-                      </Text>
-                      {hasEvents && !isSelected && (
-                        <View className="absolute bottom-1 w-1 h-1 bg-blue-400 rounded-full" />
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ))}
-          </View>
-
-          {/* Events for selected date */}
-          <View className="flex-1">
-            <View className="px-4 mb-4">
-              <Text className="text-white text-xl font-bold">
-                {selectedEvents.length > 0 
-                  ? `Events on ${currentMonth} ${selectedDate}` 
-                  : 'Upcoming Events'
-                }
-              </Text>
-            </View>
-
-            <ScrollView 
-              className="flex-1 px-4" 
-              showsVerticalScrollIndicator={false}
+      {/* Filter Buttons */}
+      <View className="px-4 py-2">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {filters.map((filter) => (
+            <TouchableOpacity
+              key={filter}
+              onPress={() => setSelectedFilter(filter)}
+              className={`mr-3 px-4 py-2 rounded-full ${
+                selectedFilter === filter ? 'bg-[#C4D9EB]' : 'bg-[#2B3840]'
+              }`}
             >
-              {selectedEvents.length > 0 ? (
-                selectedEvents.map((event) => (
-                  <CalendarEventCard key={event.id} event={event} />
-                ))
-              ) : (
-                <View className="flex-1 items-center justify-center py-20">
-                  <Ionicons name="calendar-outline" size={48} color="#64748b" />
-                  <Text className="text-slate-400 text-lg mt-4">No events on this date</Text>
-                  <Text className="text-slate-500 text-sm mt-2">Select a different date or create an event</Text>
-                  
-                  <TouchableOpacity className="bg-blue-500 px-6 py-3 rounded-2xl mt-6">
-                    <Text className="text-white font-semibold">Create Event</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </ScrollView>
+              <Text className={`font-medium ${
+                selectedFilter === filter ? 'text-[#141A1F]' : 'text-[#9EB0BD]'
+              }`}>
+                {filter}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Events List */}
+      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+        {loading ? (
+          <View className="flex-1 justify-center items-center py-20">
+            <Text className="text-[#9EB0BD] text-lg">Chargement des événements...</Text>
           </View>
-        </>
-      )}
+        ) : events.length === 0 ? (
+          <View className="flex-1 justify-center items-center py-20">
+            <Ionicons name="calendar-outline" size={64} color="#9EB0BD" />
+            <Text className="text-[#9EB0BD] text-lg font-medium mt-4 mb-2">Aucun événement trouvé</Text>
+            <Text className="text-[#9EB0BD] text-center">Créez votre premier événement pour commencer</Text>
+            <TouchableOpacity 
+              className="bg-[#C4D9EB] rounded-2xl px-6 py-3 mt-6"
+              onPress={() => router.push('/create-event')}
+            >
+              <Text className="text-[#141A1F] font-semibold">Créer un événement</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View className="pb-4">
+            {events.map((event) => (
+              <TouchableOpacity
+                key={event.id}
+                className="bg-[#2B3840] rounded-2xl mb-4 border border-[#2B3840] overflow-hidden"
+                onPress={() => router.push(`/events/${event.id}`)}
+              >
+                {/* Image de l'événement */}
+                {event.image_url ? (
+                  <Image 
+                    source={{ uri: event.image_url }} 
+                    className="w-full h-32"
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View className="w-full h-32 bg-[#1A2529] items-center justify-center">
+                    <Ionicons name="image-outline" size={48} color="#9EB0BD" />
+                    <Text className="text-[#9EB0BD] text-sm mt-2">Aucune image</Text>
+                  </View>
+                )}
+                
+                <View className="p-4">
+                  <View className="flex-row items-center mb-2">
+                    <View className="w-12 h-12 bg-[#C4D9EB] rounded-full items-center justify-center mr-3">
+                      <Text className="text-[#141A1F] font-bold text-lg">
+                        {event.sport_type?.charAt(0) || 'E'}
+                      </Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-[#FFFFFF] font-bold text-lg">{event.title}</Text>
+                      <Text className="text-[#9EB0BD] text-sm">{event.sport_type}</Text>
+                    </View>
+                    <View className="items-end">
+                      <Text className="text-[#C4D9EB] font-medium">{formatEventDate(event.date)}</Text>
+                      <Text className="text-[#9EB0BD] text-sm">{event.time}</Text>
+                    </View>
+                  </View>
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center">
+                      <Ionicons name="location-outline" size={16} color="#9EB0BD" />
+                      <Text className="text-[#9EB0BD] text-sm ml-1">{event.location}</Text>
+                    </View>
+                    <View className="flex-row items-center">
+                      <Ionicons name="people-outline" size={16} color="#9EB0BD" />
+                      <Text className="text-[#9EB0BD] text-sm ml-1">
+                        {event.current_participants || 0}/{event.max_participants || 'Illimité'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </ScrollView>
 
       {/* Bottom Navigation */}
-      <View className="bg-slate-800 flex-row justify-around items-center py-3 px-4">
-        <Link href="/" asChild>
+      <SafeAreaView edges={['bottom']} className="bg-[#141A1F]">
+        <View className="bg-[#2B3840] flex-row justify-around items-center py-2 px-2 border-t border-[#2B3840]">
+          <Link href="/" asChild>
+            <TouchableOpacity className="items-center">
+              <Ionicons name="home-outline" size={24} color="#9EB0BD" />
+              <Text className="text-[#9EB0BD] text-xs mt-1">Home</Text>
+            </TouchableOpacity>
+          </Link>
           <TouchableOpacity className="items-center">
-            <Ionicons name="home-outline" size={24} color="#64748b" />
-            <Text className="text-slate-400 text-xs mt-1">Home</Text>
+            <Ionicons name="calendar" size={24} color="#C4D9EB" />
+            <Text className="text-[#C4D9EB] text-xs mt-1 font-medium">Events</Text>
           </TouchableOpacity>
-        </Link>
-        <TouchableOpacity className="items-center">
-          <Ionicons name="calendar" size={24} color="#3b82f6" />
-          <Text className="text-blue-500 text-xs mt-1">Events</Text>
-        </TouchableOpacity>
-        <Link href="/discover" asChild>
-          <TouchableOpacity className="items-center">
-            <Ionicons name="location-outline" size={24} color="#64748b" />
-            <Text className="text-slate-400 text-xs mt-1">Discover</Text>
-          </TouchableOpacity>
-        </Link>
-        <Link href="/chat" asChild>
-          <TouchableOpacity className="items-center">
-            <Ionicons name="chatbubble-outline" size={24} color="#64748b" />
-            <Text className="text-slate-400 text-xs mt-1">Chat</Text>
-          </TouchableOpacity>
-        </Link>
-        <TouchableOpacity className="items-center">
-          <Ionicons name="person-outline" size={24} color="#64748b" />
-          <Text className="text-slate-400 text-xs mt-1">Profile</Text>
-        </TouchableOpacity>
-      </View>
+          <Link href="/discover" asChild>
+            <TouchableOpacity className="items-center">
+              <Ionicons name="location-outline" size={24} color="#9EB0BD" />
+              <Text className="text-[#9EB0BD] text-xs mt-1">Discover</Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/chat" asChild>
+            <TouchableOpacity className="items-center">
+              <Ionicons name="chatbubble-outline" size={24} color="#9EB0BD" />
+              <Text className="text-[#9EB0BD] text-xs mt-1">Chat</Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/profile" asChild>
+            <TouchableOpacity className="items-center">
+              <Ionicons name="person-outline" size={24} color="#9EB0BD" />
+              <Text className="text-[#9EB0BD] text-xs mt-1">Profile</Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
+      </SafeAreaView>
     </SafeAreaView>
   );
 } 

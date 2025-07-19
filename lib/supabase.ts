@@ -31,6 +31,7 @@ export interface Event {
   organizer_id: string;
   created_at: string;
   is_active: boolean;
+  image_url?: string;
 }
 
 export interface EventParticipant {

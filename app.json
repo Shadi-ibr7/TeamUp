@@ -40,9 +40,14 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow TeamUp to use your location to find nearby sports events and courts."
         }
-      ]
+      ],
+      "expo-maps"
     ],
     "scheme": "teamup",
-    "platforms": ["ios", "android", "web"]
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ]
   }
 }

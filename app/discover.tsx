@@ -1,11 +1,10 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { Link } from "expo-router";
-import { useEffect, useState } from "react";
-import { Alert, Dimensions, Platform, SafeAreaView, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Link } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, Dimensions, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import ConditionalMap from './components/ConditionalMap';
-
-const { width, height } = Dimensions.get('window');
 
 interface EventType {
   id: number;
@@ -27,12 +26,11 @@ interface LocationType {
   longitude: number;
 }
 
-
-
 export default function Discover() {
+  const { width, height } = Dimensions.get('window');
   const [searchLocation, setSearchLocation] = useState("");
   const [selectedRadius, setSelectedRadius] = useState("5km");
-  const [showList, setShowList] = useState(false);
+  const [showList, setShowList] = useState(true); // Commence en mode liste
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   const [userLocation, setUserLocation] = useState<LocationType | null>(null);
   const [mapRef, setMapRef] = useState<any>(null);
@@ -146,10 +144,8 @@ export default function Discover() {
     }
   };
 
-
-
   const EventBottomSheet = ({ event, onClose }: { event: EventType; onClose: () => void }) => (
-    <View className="absolute bottom-0 left-0 right-0 bg-slate-800 rounded-t-3xl p-6 border-t border-slate-600">
+    <View className="absolute bottom-0 left-0 right-0 bg-[#2B3840] rounded-t-3xl p-6 border-t border-[#141A1F]">
       <View className="flex-row items-center justify-between mb-4">
         <View className="flex-row items-center">
           <View 
@@ -159,72 +155,72 @@ export default function Discover() {
             <Text style={{ fontSize: 24 }}>{event.icon}</Text>
           </View>
           <View>
-            <Text className="text-white font-bold text-lg">{event.title}</Text>
-            <Text className="text-slate-400 text-sm">{event.location}</Text>
+            <Text className="text-[#FFFFFF] font-bold text-lg">{event.title}</Text>
+            <Text className="text-[#9EB0BD] text-sm">{event.location}</Text>
           </View>
         </View>
         <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close" size={24} color="#64748b" />
+          <Ionicons name="close" size={24} color="#9EB0BD" />
         </TouchableOpacity>
       </View>
       
       <View className="flex-row items-center mb-3">
-        <Ionicons name="time" size={16} color="#64748b" />
-        <Text className="text-slate-300 ml-2">{event.time}</Text>
+        <Ionicons name="time" size={16} color="#9EB0BD" />
+        <Text className="text-[#FFFFFF] ml-2">{event.time}</Text>
       </View>
       
       <View className="flex-row items-center mb-3">
-        <Ionicons name="location" size={16} color="#64748b" />
-        <Text className="text-slate-300 ml-2">{event.distance} away</Text>
+        <Ionicons name="location" size={16} color="#9EB0BD" />
+        <Text className="text-[#FFFFFF] ml-2">{event.distance} away</Text>
       </View>
       
       <View className="flex-row items-center mb-4">
-        <Ionicons name="people" size={16} color="#64748b" />
-        <Text className="text-slate-300 ml-2">{event.participants}</Text>
+        <Ionicons name="people" size={16} color="#9EB0BD" />
+        <Text className="text-[#FFFFFF] ml-2">{event.participants}</Text>
       </View>
       
       <View className="flex-row space-x-3">
         <Link href={`/events/${event.id}`} asChild>
-          <TouchableOpacity className="flex-1 bg-blue-500 py-3 rounded-2xl">
-            <Text className="text-white text-center font-semibold">View Details</Text>
+          <TouchableOpacity className="flex-1 bg-[#C4D9EB] py-3 rounded-2xl">
+            <Text className="text-[#141A1F] text-center font-semibold">View Details</Text>
           </TouchableOpacity>
         </Link>
-        <TouchableOpacity className="flex-1 bg-slate-700 py-3 rounded-2xl">
-          <Text className="text-white text-center font-semibold">Get Directions</Text>
+        <TouchableOpacity className="flex-1 bg-[#141A1F] py-3 rounded-2xl">
+          <Text className="text-[#FFFFFF] text-center font-semibold">Get Directions</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-900">
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+    <SafeAreaView className="flex-1 bg-[#141A1F]">
+      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
       
       {/* Header */}
-      <View className="flex-row items-center px-4 py-4 bg-slate-800">
+      <View className="flex-row items-center px-4 py-4 bg-[#2B3840]">
         <TouchableOpacity className="mr-4">
-          <Ionicons name="arrow-back" size={24} color="white" />
+          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text className="text-white text-xl font-semibold flex-1">Find a court</Text>
+        <Text className="text-[#FFFFFF] text-xl font-semibold flex-1">Find a court</Text>
         <TouchableOpacity onPress={() => setShowList(!showList)}>
-          <Ionicons name="list" size={24} color="white" />
+          <Ionicons name={showList ? "map" : "list"} size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
-      <View className="px-4 py-3 bg-slate-800">
-        <View className="bg-slate-700 rounded-2xl px-4 py-3 flex-row items-center">
-          <Ionicons name="search" size={20} color="#64748b" />
+      <View className="px-4 py-3 bg-[#2B3840]">
+        <View className="bg-[#141A1F] rounded-2xl px-4 py-3 flex-row items-center">
+          <Ionicons name="search" size={20} color="#9EB0BD" />
           <TextInput
-            className="text-white ml-3 flex-1 text-base"
+            className="text-[#FFFFFF] ml-3 flex-1 text-base"
             placeholder="Search for events, courts..."
-            placeholderTextColor="#64748b"
+            placeholderTextColor="#9EB0BD"
             value={searchLocation}
             onChangeText={setSearchLocation}
           />
           {searchLocation.length > 0 && (
             <TouchableOpacity onPress={() => setSearchLocation("")}>
-              <Ionicons name="close-circle" size={20} color="#64748b" />
+              <Ionicons name="close-circle" size={20} color="#9EB0BD" />
             </TouchableOpacity>
           )}
         </View>
@@ -232,11 +228,11 @@ export default function Discover() {
 
       {showList ? (
         // Liste des événements
-        <ScrollView className="flex-1 bg-gray-100">
+        <ScrollView className="flex-1 bg-[#141A1F]">
           <View className="p-4">
             {nearbyEvents.map((event) => (
               <Link key={event.id} href={`/events/${event.id}`} asChild>
-                <TouchableOpacity className="bg-white rounded-2xl p-4 mb-3 shadow-sm">
+                <TouchableOpacity className="bg-[#2B3840] rounded-2xl p-4 mb-3">
                   <View className="flex-row items-center">
                     <View 
                       className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
@@ -246,17 +242,17 @@ export default function Discover() {
                     </View>
                     
                     <View className="flex-1">
-                      <Text className="text-slate-900 font-bold text-lg">{event.title}</Text>
+                      <Text className="text-[#FFFFFF] font-bold text-lg">{event.title}</Text>
                       <View className="flex-row items-center mt-1">
-                        <Ionicons name="location" size={14} color="#64748b" />
-                        <Text className="text-slate-600 text-sm ml-1">{event.location}</Text>
-                        <Text className="text-blue-500 text-sm ml-2">• {event.distance}</Text>
+                        <Ionicons name="location" size={14} color="#9EB0BD" />
+                        <Text className="text-[#9EB0BD] text-sm ml-1">{event.location}</Text>
+                        <Text className="text-[#C4D9EB] text-sm ml-2">• {event.distance}</Text>
                       </View>
-                      <Text className="text-slate-600 text-sm mt-1">{event.time}</Text>
-                      <Text className="text-slate-700 text-sm mt-1">{event.participants}</Text>
+                      <Text className="text-[#9EB0BD] text-sm mt-1">{event.time}</Text>
+                      <Text className="text-[#FFFFFF] text-sm mt-1">{event.participants}</Text>
                     </View>
                     
-                    <Ionicons name="chevron-forward" size={20} color="#64748b" />
+                    <Ionicons name="chevron-forward" size={20} color="#9EB0BD" />
                   </View>
                 </TouchableOpacity>
               </Link>
@@ -274,55 +270,55 @@ export default function Discover() {
             setMapRef={setMapRef}
             userLocation={userLocation}
             onMapPress={() => setSelectedEvent(null)}
-          />
+              />
 
           {/* Contrôles de carte (seulement sur mobile) */}
           {Platform.OS !== 'web' && (
             <>
-              <View className="absolute right-4 bottom-24 space-y-2">
-                <TouchableOpacity 
-                  className="w-12 h-12 bg-white rounded-full items-center justify-center shadow-lg"
-                  onPress={() => {
-                    if (mapRef) {
-                      mapRef.animateToRegion({
-                        ...initialRegion,
-                        latitudeDelta: initialRegion.latitudeDelta * 0.5,
-                        longitudeDelta: initialRegion.longitudeDelta * 0.5,
-                      }, 500);
-                    }
-                  }}
-                >
-                  <Ionicons name="add" size={24} color="#1f2937" />
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  className="w-12 h-12 bg-white rounded-full items-center justify-center shadow-lg"
-                  onPress={() => {
-                    if (mapRef) {
-                      mapRef.animateToRegion({
-                        ...initialRegion,
-                        latitudeDelta: initialRegion.latitudeDelta * 2,
-                        longitudeDelta: initialRegion.longitudeDelta * 2,
-                      }, 500);
-                    }
-                  }}
-                >
-                  <Ionicons name="remove" size={24} color="#1f2937" />
-                </TouchableOpacity>
-              </View>
+          <View className="absolute right-4 bottom-24 space-y-2">
+            <TouchableOpacity 
+                  className="w-12 h-12 bg-[#FFFFFF] rounded-full items-center justify-center shadow-lg"
+              onPress={() => {
+                if (mapRef) {
+                  mapRef.animateToRegion({
+                    ...initialRegion,
+                    latitudeDelta: initialRegion.latitudeDelta * 0.5,
+                    longitudeDelta: initialRegion.longitudeDelta * 0.5,
+                  }, 500);
+                }
+              }}
+            >
+                  <Ionicons name="add" size={24} color="#141A1F" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+                  className="w-12 h-12 bg-[#FFFFFF] rounded-full items-center justify-center shadow-lg"
+              onPress={() => {
+                if (mapRef) {
+                  mapRef.animateToRegion({
+                    ...initialRegion,
+                    latitudeDelta: initialRegion.latitudeDelta * 2,
+                    longitudeDelta: initialRegion.longitudeDelta * 2,
+                  }, 500);
+                }
+              }}
+            >
+                  <Ionicons name="remove" size={24} color="#141A1F" />
+            </TouchableOpacity>
+          </View>
 
-              {/* Bouton Ma Position */}
-              <TouchableOpacity 
-                className="absolute right-4 bottom-40 w-12 h-12 bg-white rounded-full items-center justify-center shadow-lg"
-                onPress={centerOnUserLocation}
-              >
-                <Ionicons name="locate" size={20} color="#3b82f6" />
-              </TouchableOpacity>
+          {/* Bouton Ma Position */}
+          <TouchableOpacity 
+                className="absolute right-4 bottom-40 w-12 h-12 bg-[#FFFFFF] rounded-full items-center justify-center shadow-lg"
+            onPress={centerOnUserLocation}
+          >
+                <Ionicons name="locate" size={20} color="#C4D9EB" />
+          </TouchableOpacity>
             </>
           )}
 
           {/* Bouton Menu */}
-          <TouchableOpacity className="absolute left-4 bottom-24 w-12 h-12 bg-white rounded-full items-center justify-center shadow-lg">
-            <Ionicons name="menu" size={20} color="#1f2937" />
+          <TouchableOpacity className="absolute left-4 bottom-24 w-12 h-12 bg-[#FFFFFF] rounded-full items-center justify-center shadow-lg">
+            <Ionicons name="menu" size={20} color="#141A1F" />
           </TouchableOpacity>
         </View>
       )}
@@ -336,34 +332,38 @@ export default function Discover() {
       )}
 
       {/* Bottom Navigation */}
-      <View className="bg-slate-800 flex-row justify-around items-center py-4 px-4 border-t border-slate-700">
+      <SafeAreaView edges={['bottom']} className="bg-[#141A1F]">
+        <View className="bg-[#2B3840] flex-row justify-around items-center py-2 px-2 border-t border-[#2B3840]">
         <Link href="/" asChild>
           <TouchableOpacity className="items-center">
-            <Ionicons name="home-outline" size={24} color="#64748b" />
-            <Text className="text-slate-400 text-xs mt-1">Home</Text>
+              <Ionicons name="home-outline" size={24} color="#9EB0BD" />
+              <Text className="text-[#9EB0BD] text-xs mt-1">Home</Text>
           </TouchableOpacity>
         </Link>
         <Link href="/events" asChild>
           <TouchableOpacity className="items-center">
-            <Ionicons name="calendar-outline" size={24} color="#64748b" />
-            <Text className="text-slate-400 text-xs mt-1">Events</Text>
+              <Ionicons name="calendar-outline" size={24} color="#9EB0BD" />
+              <Text className="text-[#9EB0BD] text-xs mt-1">Events</Text>
           </TouchableOpacity>
         </Link>
         <TouchableOpacity className="items-center">
-          <Ionicons name="location" size={24} color="#3b82f6" />
-          <Text className="text-blue-500 text-xs mt-1 font-medium">Discover</Text>
+            <Ionicons name="location" size={24} color="#C4D9EB" />
+            <Text className="text-[#C4D9EB] text-xs mt-1 font-medium">Discover</Text>
         </TouchableOpacity>
         <Link href="/chat" asChild>
           <TouchableOpacity className="items-center">
-            <Ionicons name="chatbubble-outline" size={24} color="#64748b" />
-            <Text className="text-slate-400 text-xs mt-1">Chat</Text>
+              <Ionicons name="chatbubble-outline" size={24} color="#9EB0BD" />
+              <Text className="text-[#9EB0BD] text-xs mt-1">Chat</Text>
           </TouchableOpacity>
         </Link>
+          <Link href="/profile" asChild>
         <TouchableOpacity className="items-center">
-          <Ionicons name="person-outline" size={24} color="#64748b" />
-          <Text className="text-slate-400 text-xs mt-1">Profile</Text>
+              <Ionicons name="person-outline" size={24} color="#9EB0BD" />
+              <Text className="text-[#9EB0BD] text-xs mt-1">Profile</Text>
         </TouchableOpacity>
+          </Link>
       </View>
+      </SafeAreaView>
     </SafeAreaView>
   );
 } 

@@ -56,6 +56,31 @@ export class EventService {
     return data;
   }
 
+  // Mettre à jour un événement
+  static async updateEvent(eventId: string, userId: string, updates: Partial<Omit<Event, 'id' | 'created_at' | 'current_participants' | 'organizer_id'>>) {
+    // Vérifier que l'utilisateur est bien l'organisateur
+    const { data: event, error: fetchError } = await supabase
+      .from('events')
+      .select('organizer_id')
+      .eq('id', eventId)
+      .single();
+
+    if (fetchError) throw fetchError;
+    if (event.organizer_id !== userId) {
+      throw new Error('Vous n\'êtes pas autorisé à modifier cet événement');
+    }
+
+    const { data, error } = await supabase
+      .from('events')
+      .update(updates)
+      .eq('id', eventId)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return data;
+  }
+
   // Rejoindre un événement
   static async joinEvent(eventId: string, userId: string) {
     // Vérifier si l'utilisateur n'est pas déjà inscrit
@@ -103,6 +128,37 @@ export class EventService {
     await supabase.rpc('decrement_participants', { event_id: eventId });
   }
 
+  // Supprimer un événement (seulement pour l'organisateur)
+  static async deleteEvent(eventId: string, userId: string) {
+    // Vérifier que l'utilisateur est bien l'organisateur
+    const { data: event, error: fetchError } = await supabase
+      .from('events')
+      .select('organizer_id')
+      .eq('id', eventId)
+      .single();
+
+    if (fetchError) throw fetchError;
+    if (event.organizer_id !== userId) {
+      throw new Error('Vous n\'êtes pas autorisé à supprimer cet événement');
+    }
+
+    // Supprimer d'abord tous les participants
+    const { error: participantsError } = await supabase
+      .from('event_participants')
+      .delete()
+      .eq('event_id', eventId);
+
+    if (participantsError) throw participantsError;
+
+    // Supprimer l'événement
+    const { error: eventError } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId);
+
+    if (eventError) throw eventError;
+  }
+
   // Rechercher des événements par localisation
   static async searchEventsNearby(lat: number, lng: number, radius: number = 10) {
     const { data, error } = await supabase
@@ -128,5 +184,24 @@ export class EventService {
     
     if (error) throw error;
     return data.map(item => item.event);
+  }
+
+  // Récupérer les événements créés par un utilisateur
+  static async getUserCreatedEvents(userId: string) {
+    const { data, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        participants:event_participants(
+          user_id,
+          status,
+          user:users(name, avatar_url)
+        )
+      `)
+      .eq('organizer_id', userId)
+      .order('created_at', { ascending: false });
+    
+    if (error) throw error;
+    return data;
   }
 } 
