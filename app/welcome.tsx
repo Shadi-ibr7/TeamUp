@@ -1,71 +1,92 @@
-import { useRouter } from 'expo-router';
-import { Image, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
+import { ImageBackground, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function WelcomeScreen() {
-  const router = useRouter();
-
+export default function Welcome() {
   return (
-    <SafeAreaView className="flex-1 bg-[#141A1F]">
-      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
-      <View className="flex-1 justify-center items-center px-8">
-        {/* Image d'accueil */}
-        <View className="w-[420px] h-[350px] mb-10">
-          <Image
-            source={require('../assets/images/image_page_accueil.png')}
-            className="w-full h-full"
-            resizeMode="cover"
-            onError={(e) => console.log('Erreur de chargement image:', e)}
-          />
-        </View>
-
-        {/* Titre et description */}
-        <View className="mb-10 items-center">
-          <Text className="text-3xl font-bold text-[#FFFFFF] mb-3">
-            TeamUp!
-          </Text>
-          <Text className="text-sm text-[#9EB0BD] text-center px-6 leading-6">
-            Discover your next game or start your own
-          </Text>
-        </View>
-
-        {/* Boutons */}
-        <View className="w-full space-y-4 px-4">
-          {/* Bouton Create Account */}
-          <TouchableOpacity
-            onPress={() => router.push('/auth/signup')}
-            className="bg-[#C4D9EB] py-4 px-8 rounded-2xl w-full mb-4"
-            style={{ 
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 5,
-            }}
-          >
-            <Text className="text-[#141A1F] text-base font-semibold text-center">
-              Create Account
-            </Text>
-          </TouchableOpacity>
-
-          {/* Bouton Log In */}
-          <TouchableOpacity
-            onPress={() => router.push('/auth/login')}
-            className="bg-[#2B3840] py-4 px-8 rounded-2xl w-full"
-          >
-            <Text className="text-[#FFFFFF] text-base font-semibold text-center">
-              Log In
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Conditions d'utilisation */}
-        <View className="mt-auto pb-20">
-          <Text className="text-[9px] text-[#9EB0BD] text-center px-8 leading-4">
-            By proceeding, you consent to our Terms of Service and Privacy Policy
-          </Text>
-        </View>
-      </View>
-    </SafeAreaView>
+    <ImageBackground
+      source={{ uri: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200' }}
+      style={{ flex: 1 }}
+      blurRadius={30}
+    >
+      <LinearGradient
+        colors={['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          <StatusBar barStyle="dark-content" />
+          
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+            <View 
+              style={{ 
+                padding: 32,
+                borderRadius: 24,
+                alignItems: 'center',
+                backgroundColor: 'rgba(255,255,255,0.1)',
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.2)'
+              }}
+            >
+              <View 
+                style={{ 
+                  width: 96,
+                  height: 96,
+                  borderRadius: 48,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 24,
+                  backgroundColor: 'rgba(0,122,255,0.2)'
+                }}
+              >
+                <Text style={{ fontWeight: 'bold', fontSize: 48, color: '#007AFF' }}>T</Text>
+              </View>
+              
+              <Text style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 16, color: '#000000' }}>
+                TeamUp!
+              </Text>
+              
+              <Text style={{ textAlign: 'center', marginBottom: 32, color: '#8E8E93' }}>
+                Rejoignez la communauté sportive et trouvez vos partenaires de jeu
+              </Text>
+              
+              <View style={{ width: '100%', gap: 16 }}>
+                <Link href="/auth/login" asChild>
+                  <TouchableOpacity
+                    style={{ 
+                      paddingVertical: 16,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      backgroundColor: '#007AFF'
+                    }}
+                  >
+                    <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 18 }}>
+                      Se connecter
+                    </Text>
+                  </TouchableOpacity>
+                </Link>
+                
+                <Link href="/auth/signup" asChild>
+                  <TouchableOpacity
+                    style={{ 
+                      paddingVertical: 16,
+                      borderRadius: 16,
+                      alignItems: 'center',
+                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      borderWidth: 2,
+                      borderColor: 'rgba(255,255,255,0.2)'
+                    }}
+                  >
+                    <Text style={{ fontWeight: '500', fontSize: 18, color: '#000000' }}>
+                      Créer un compte
+                    </Text>
+                  </TouchableOpacity>
+                </Link>
+              </View>
+            </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+    </ImageBackground>
   );
 } 

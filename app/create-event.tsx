@@ -1,13 +1,16 @@
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
-import { useState } from "react";
-import { Alert, Image, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Alert, Image, ImageBackground, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../lib/context/AuthContext';
-import { EventService } from '../lib/services/events';
-import { ProfileService } from '../lib/services/profile';
+import { useAuth } from "../lib/context/AuthContext";
+import { PublicEquipment } from '../lib/services/equipments';
+import { EventService } from "../lib/services/events";
+import { GeocodingService } from "../lib/services/geocoding";
+import { supabase } from '../lib/supabase';
 
 export default function CreateEvent() {
   const [title, setTitle] = useState("");
@@ -24,6 +27,14 @@ export default function CreateEvent() {
   const [eventImage, setEventImage] = useState<string | null>(null);
   const [imageUploading, setImageUploading] = useState(false);
 
+  const [showTerrainModal, setShowTerrainModal] = useState(false);
+  const [publicTerrains, setPublicTerrains] = useState<PublicEquipment[]>([]);
+  const [selectedTerrain, setSelectedTerrain] = useState<PublicEquipment | null>(null);
+  const [loadingTerrains, setLoadingTerrains] = useState(false);
+  const [usePublicTerrain, setUsePublicTerrain] = useState(false);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
+  const [searchRadius, setSearchRadius] = useState(50);
+
   const { user } = useAuth();
   const router = useRouter();
 
@@ -32,387 +43,551 @@ export default function CreateEvent() {
     "Cycling", "Swimming", "Volleyball", "Badminton"
   ];
 
-  // Sélectionner et uploader une image
-  const pickImage = async () => {
+  useEffect(() => {
+    if (usePublicTerrain) {
+      loadPublicTerrains();
+    }
+  }, [sportType, searchRadius, usePublicTerrain]);
+
+  const createTestTerrains = () => {
+    const testTerrains: PublicEquipment[] = [
+      {
+        id: 'test_1',
+        external_id: 'test_1',
+        name: 'Terrain de Football Municipal',
+        type: 'Terrain de football',
+        address: '123 Avenue de la République',
+        city: 'Paris',
+        department: '75',
+        latitude: 48.8566,
+        longitude: 2.3522,
+        manager_name: 'Mairie de Paris',
+        property_type: 'Public',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'test_2',
+        external_id: 'test_2',
+        name: 'Stade Municipal',
+        type: 'Terrain de football',
+        address: '456 Boulevard Saint-Germain',
+        city: 'Paris',
+        department: '75',
+        latitude: 48.8534,
+        longitude: 2.3488,
+        manager_name: 'Mairie de Paris',
+        property_type: 'Public',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'test_3',
+        external_id: 'test_3',
+        name: 'Complexe Sportif',
+        type: 'Terrain de football',
+        address: '789 Rue de Rivoli',
+        city: 'Paris',
+        department: '75',
+        latitude: 48.8606,
+        longitude: 2.3376,
+        manager_name: 'Mairie de Paris',
+        property_type: 'Public',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ];
+    setPublicTerrains(testTerrains);
+  };
+
+  const loadPublicTerrains = async () => {
+    if (!sportType) return;
+    setLoadingTerrains(true);
     try {
-      // Demander les permissions
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission refusée', 'Nous avons besoin de votre permission pour accéder à votre galerie');
-        return;
-      }
-
-      // Ouvrir le sélecteur d'image
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [16, 9],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        setImageUploading(true);
-        const imageUri = result.assets[0].uri;
-        
-        // Uploader l'image
-        if (user?.id) {
-          const imageUrl = await ProfileService.uploadEventImage(user.id, imageUri);
-          if (imageUrl) {
-            setEventImage(imageUrl);
-            console.log('✅ Image uploadée avec succès:', imageUrl);
-          } else {
-            Alert.alert(
-              'Erreur d\'upload', 
-              'Impossible d\'uploader l\'image. Vérifiez votre connexion internet et réessayez.',
-              [
-                { text: 'OK' },
-                { text: 'Réessayer', onPress: () => pickImage() }
-              ]
-            );
-          }
-        }
-        setImageUploading(false);
-      }
+      createTestTerrains();
     } catch (error) {
-      console.error('Erreur lors de la sélection d\'image:', error);
-      Alert.alert('Erreur', 'Impossible de sélectionner l\'image');
+      console.error('Erreur lors du chargement des terrains:', error);
+      Alert.alert('Erreur', 'Impossible de charger les terrains publics');
+    } finally {
+      setLoadingTerrains(false);
+    }
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setEventImage(result.assets[0].uri);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission refusée', 'Nous avons besoin de votre permission pour accéder à la caméra');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setEventImage(result.assets[0].uri);
+    }
+  };
+
+  const uploadImage = async (uri: string): Promise<string> => {
+    setImageUploading(true);
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      
+      const fileName = `event-images/${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+      const { data, error } = await supabase.storage
+        .from('event-images')
+        .upload(fileName, blob);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Erreur lors de l\'upload:', error);
+      throw new Error('Impossible d\'uploader l\'image');
+    } finally {
       setImageUploading(false);
     }
   };
 
-  // Formater la date pour l'affichage
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('fr-FR');
-  };
-
-  // Formater l'heure pour l'affichage
-  const formatTime = (time: Date) => {
-    return time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  // Gérer le changement de date
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-  };
-
-  // Gérer le changement d'heure
-  const onTimeChange = (event: any, selectedTime?: Date) => {
-    setShowTimePicker(Platform.OS === 'ios');
-    if (selectedTime) {
-      setTime(selectedTime);
-    }
-  };
-
   const handleCreateEvent = async () => {
-    if (!user) {
+    if (!user?.id) {
       Alert.alert('Erreur', 'Vous devez être connecté pour créer un événement');
       return;
     }
 
-    if (!title || !description || !location || !maxParticipants || !sportType) {
+    if (!title || !description || !location || !sportType || !maxParticipants) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires');
       return;
     }
 
-    // Vérifier que la date n'est pas dans le passé
-    const eventDateTime = new Date(date);
-    eventDateTime.setHours(time.getHours(), time.getMinutes());
-    
-    if (eventDateTime < new Date()) {
-      Alert.alert('Erreur', 'La date et l\'heure de l\'événement ne peuvent pas être dans le passé');
-      return;
-    }
-
-    const participants = parseInt(maxParticipants);
-    if (isNaN(participants) || participants < 2) {
-      Alert.alert('Erreur', 'Le nombre de participants doit être d\'au moins 2');
-      return;
-    }
-
-    const eventPrice = price ? parseFloat(price) : 0;
-    if (isNaN(eventPrice) || eventPrice < 0) {
-      Alert.alert('Erreur', 'Le prix doit être un nombre positif');
-      return;
-    }
-
     setLoading(true);
-
     try {
-      // Formatage de la date et heure séparément
-      const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-      const formattedTime = `${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`;
+      let imageUrl = null;
+      if (eventImage) {
+        imageUrl = await uploadImage(eventImage);
+      }
+
+      let latitude = null;
+      let longitude = null;
       
-      // Récupérer les coordonnées géographiques
-      const coordinates = await GeocodingService.getCoordinatesForLocation(location);
-      
+      if (selectedTerrain) {
+        latitude = selectedTerrain.latitude;
+        longitude = selectedTerrain.longitude;
+      } else {
+        try {
+          const coords = await GeocodingService.getCoordinatesForLocation(location);
+          latitude = coords.latitude;
+          longitude = coords.longitude;
+        } catch (error) {
+          console.warn('Impossible d\'obtenir les coordonnées GPS:', error);
+        }
+      }
+
       const eventData = {
         title,
         description,
-        location,
-        latitude: coordinates.latitude,
-        longitude: coordinates.longitude,
-        date: formattedDate,
-        time: formattedTime,
         sport_type: sportType,
-        max_participants: participants,
+        date: date.toISOString().split('T')[0],
+        time: time.toTimeString().split(' ')[0],
+        location: selectedTerrain ? `${selectedTerrain.name}, ${selectedTerrain.address}` : location,
+        max_participants: parseInt(maxParticipants),
+        price: price ? parseFloat(price) : 0,
         organizer_id: user.id,
-        is_active: true,
-        image_url: eventImage || undefined // Utiliser undefined au lieu de null
+        image_url: imageUrl || undefined,
+        latitude: latitude || 0,
+        longitude: longitude || 0,
+        is_active: true
       };
 
-      await EventService.createEvent(eventData);
+      const newEvent = await EventService.createEvent(eventData);
       
-      Alert.alert(
-        'Succès', 
-        'Événement créé avec succès !',
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      Alert.alert('Succès', 'Événement créé avec succès !', [
+        {
+          text: 'Voir l\'événement',
+          onPress: () => router.push(`/events/${newEvent.id}`)
+        },
+        {
+          text: 'Créer un autre',
+          onPress: () => {
+            setTitle("");
+            setDescription("");
+            setLocation("");
+            setDate(new Date());
+            setTime(new Date());
+            setMaxParticipants("");
+            setSportType("");
+            setPrice("");
+            setEventImage(null);
+            setSelectedTerrain(null);
+          }
+        }
+      ]);
     } catch (error: any) {
-      console.error('Erreur lors de la création de l\'événement:', error);
+      console.error('Erreur lors de la création:', error);
       Alert.alert('Erreur', error.message || 'Impossible de créer l\'événement');
     } finally {
       setLoading(false);
     }
   };
 
+  const getSportIcon = (sport: string) => {
+    const icons: { [key: string]: string } = {
+      'Football': '⚽', 'Basketball': '🏀', 'Tennis': '🎾', 'Running': '🏃‍♂️', 'Cycling': '🚴‍♂️', 'Swimming': '🏊‍♂️', 'Volleyball': '🏐', 'Badminton': '🏸'
+    };
+    return icons[sport] || '🏟️';
+  };
+
+  const getSportColor = (sport: string) => {
+    const colors: { [key: string]: string } = {
+      'Football': '#22c55e', 'Basketball': '#f59e0b', 'Tennis': '#0891b2', 'Running': '#d97706', 'Cycling': '#16a34a', 'Swimming': '#06b6d4', 'Volleyball': '#8b5cf6', 'Badminton': '#ec4899'
+    };
+    return colors[sport] || '#6b7280';
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-[#141A1F]">
-      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
-      
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-4 bg-[#141A1F]">
-        <TouchableOpacity onPress={() => router.back()} className="mr-4">
-          <Ionicons name="arrow-back" size={24} color="#9EB0BD" />
-        </TouchableOpacity>
-        <Text className="text-[#FFFFFF] text-xl font-bold flex-1">Créer un événement</Text>
-      </View>
-
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
-        {/* Titre */}
-        <View className="mb-4">
-          <Text className="text-[#FFFFFF] text-base font-medium mb-2">Titre de l'événement *</Text>
-          <View className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840]">
-            <TextInput
-              className="text-[#FFFFFF] text-base"
-              placeholder="Ex: Match de football amical"
-              placeholderTextColor="#9EB0BD"
-              value={title}
-              onChangeText={setTitle}
-              maxLength={100}
-            />
+    <ImageBackground
+      source={{ uri: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200' }}
+      style={{ flex: 1 }}
+      blurRadius={30}
+    >
+      <LinearGradient colors={['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']} style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <StatusBar barStyle="dark-content" />
+          
+          {/* Header simple */}
+          <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.05)' }}>
+              <Ionicons name="arrow-back" size={22} color="#111" />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: '#111' }}>Créer un événement</Text>
+            <View style={{ width: 38 }} />
           </View>
-        </View>
 
-        {/* Description */}
-        <View className="mb-4">
-          <Text className="text-[#FFFFFF] text-base font-medium mb-2">Description *</Text>
-          <View className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840]">
-            <TextInput
-              className="text-[#FFFFFF] text-base"
-              placeholder="Décrivez votre événement..."
-              placeholderTextColor="#9EB0BD"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-              textAlignVertical="top"
-              maxLength={500}
-            />
-          </View>
-        </View>
+          <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+            <View style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 24, marginBottom: 24 }}>
+              <Text style={{ fontSize: 24, fontWeight: '700', marginBottom: 24, color: '#111' }}>
+                Nouvel événement
+              </Text>
 
-        {/* Image de l'événement */}
-        <View className="mb-4">
-          <Text className="text-[#FFFFFF] text-base font-medium mb-2">Photo de l'événement</Text>
-          <TouchableOpacity 
-            onPress={pickImage}
-            className="bg-[#2B3840] rounded-2xl border-2 border-dashed border-[#9EB0BD] p-6 items-center justify-center"
-            disabled={imageUploading}
-          >
-            {eventImage ? (
-              <View className="w-full">
-                <Image 
-                  source={{ uri: eventImage }} 
-                  className="w-full h-48 rounded-xl"
-                  resizeMode="cover"
-                />
-                <TouchableOpacity 
-                  onPress={() => setEventImage(null)}
-                  className="absolute top-2 right-2 bg-[#ff6b6b] rounded-full p-2"
+              {/* Image Upload */}
+              <View style={{ marginBottom: 24 }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12, color: '#111' }}>
+                  Image de l'événement
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert('Choisir une image', 'Comment voulez-vous ajouter une image ?', [
+                      { text: 'Annuler', style: 'cancel' },
+                      { text: 'Prendre une photo', onPress: takePhoto },
+                      { text: 'Choisir depuis la galerie', onPress: pickImage }
+                    ]);
+                  }}
+                  style={{ width: '100%', height: 128, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(0,0,0,0.2)' }}
                 >
-                  <Ionicons name="close" size={16} color="#FFFFFF" />
+                  {eventImage ? (
+                    <Image source={{ uri: eventImage }} style={{ width: '100%', height: '100%', borderRadius: 16 }} />
+                  ) : (
+                    <View style={{ alignItems: 'center' }}>
+                      <Ionicons name="camera" size={32} color="#666" />
+                      <Text style={{ marginTop: 8, color: '#666' }}>
+                        Ajouter une image
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               </View>
-            ) : (
-              <View className="items-center">
-                {imageUploading ? (
-                  <View className="items-center">
-                    <Ionicons name="cloud-upload" size={48} color="#C4D9EB" />
-                    <Text className="text-[#C4D9EB] text-base mt-2">Upload en cours...</Text>
-                  </View>
-                ) : (
-                  <View className="items-center">
-                    <Ionicons name="camera" size={48} color="#9EB0BD" />
-                    <Text className="text-[#9EB0BD] text-base mt-2">Ajouter une photo</Text>
-                    <Text className="text-[#9EB0BD] text-sm mt-1">Taille recommandée: 16:9</Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
 
-        {/* Type de sport */}
-        <View className="mb-4">
-          <Text className="text-[#FFFFFF] text-base font-medium mb-2">Type de sport *</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View className="flex-row">
-              {sportTypes.map((sport) => (
+              {/* Basic Info */}
+              <View style={{ gap: 16 }}>
+                <View>
+                  <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Titre de l'événement *</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                    <Ionicons name="create-outline" size={18} color="#666" />
+                    <TextInput
+                      placeholder="Ex: Match amical de football"
+                      placeholderTextColor="#888"
+                      value={title}
+                      onChangeText={setTitle}
+                      style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                    />
+                  </View>
+                </View>
+
+                <View>
+                  <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Description</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                    <Ionicons name="document-text-outline" size={18} color="#666" style={{ marginTop: 2 }} />
+                    <TextInput
+                      placeholder="Décrivez votre événement..."
+                      placeholderTextColor="#888"
+                      value={description}
+                      onChangeText={setDescription}
+                      multiline
+                      numberOfLines={3}
+                      style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                    />
+                  </View>
+                </View>
+
+                {/* Sport Type Selection */}
+                <View>
+                  <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12, color: '#111' }}>
+                    Type de sport *
+                  </Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      {sportTypes.map((sport) => (
+                        <TouchableOpacity
+                          key={sport}
+                          onPress={() => setSportType(sport)}
+                          style={{ 
+                            flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 999, borderWidth: 2,
+                            backgroundColor: sportType === sport ? 'rgba(0,122,255,0.2)' : 'transparent',
+                            borderColor: sportType === sport ? '#007AFF' : 'rgba(0,0,0,0.2)'
+                          }}
+                        >
+                          <Text style={{ fontSize: 18, marginRight: 8 }}>{getSportIcon(sport)}</Text>
+                          <Text style={{ fontWeight: '500', color: sportType === sport ? '#007AFF' : '#111' }}>
+                            {sport}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </ScrollView>
+                </View>
+
+                {/* Date and Time */}
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity onPress={() => setShowDatePicker(true)} style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Date *</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="calendar-outline" size={18} color="#666" />
+                      <Text style={{ marginLeft: 8, flex: 1, color: '#111' }}>{date.toLocaleDateString('fr-FR')}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity onPress={() => setShowTimePicker(true)} style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Heure *</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="time-outline" size={18} color="#666" />
+                      <Text style={{ marginLeft: 8, flex: 1, color: '#111' }}>{time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Location */}
+                <View>
+                  <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12, color: '#111' }}>
+                    Localisation *
+                  </Text>
+                  
+                  <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+                    <TouchableOpacity
+                      onPress={() => setUsePublicTerrain(false)}
+                      style={{ 
+                        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+                        backgroundColor: !usePublicTerrain ? '#007AFF' : 'rgba(0,0,0,0.06)'
+                      }}
+                    >
+                      <Text style={{ color: !usePublicTerrain ? '#fff' : '#111', fontWeight: '600' }}>Adresse libre</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => setUsePublicTerrain(true)}
+                      style={{ 
+                        paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
+                        backgroundColor: usePublicTerrain ? '#007AFF' : 'rgba(0,0,0,0.06)'
+                      }}
+                    >
+                      <Text style={{ color: usePublicTerrain ? '#fff' : '#111', fontWeight: '600' }}>Terrain public</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {!usePublicTerrain ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="location-outline" size={18} color="#666" />
+                      <TextInput
+                        placeholder="Adresse de l'événement"
+                        placeholderTextColor="#888"
+                        value={location}
+                        onChangeText={setLocation}
+                        style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                      />
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => setShowTerrainModal(true)}
+                      style={{ 
+                        flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 14
+                      }}
+                    >
+                      <Ionicons name="search-outline" size={18} color="#666" />
+                      <Text style={{ marginLeft: 8, flex: 1, color: selectedTerrain ? '#111' : '#888' }}>
+                        {selectedTerrain ? selectedTerrain.name : 'Choisir un terrain'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Participants and Price */}
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Participants max *</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="people-outline" size={18} color="#666" />
+                      <TextInput
+                        placeholder="10"
+                        placeholderTextColor="#888"
+                        value={maxParticipants}
+                        onChangeText={setMaxParticipants}
+                        keyboardType="numeric"
+                        style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                      />
+                    </View>
+                  </View>
+                  
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Prix (€)</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="card-outline" size={18} color="#666" />
+                      <TextInput
+                        placeholder="0"
+                        placeholderTextColor="#888"
+                        value={price}
+                        onChangeText={setPrice}
+                        keyboardType="numeric"
+                        style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Create Button */}
+              <View style={{ marginTop: 32 }}>
                 <TouchableOpacity
-                  key={sport}
-                  onPress={() => setSportType(sport)}
-                  className={`mr-3 px-4 py-3 rounded-2xl ${
-                    sportType === sport 
-                      ? 'bg-[#C4D9EB]' 
-                      : 'bg-[#2B3840] border border-[#2B3840]'
-                  }`}
+                  onPress={handleCreateEvent}
+                  disabled={loading}
+                  style={{ 
+                    paddingVertical: 16, borderRadius: 16, alignItems: 'center',
+                    backgroundColor: '#007AFF',
+                    opacity: loading ? 0.5 : 1
+                  }}
                 >
-                  <Text className={`font-medium ${
-                    sportType === sport ? 'text-[#141A1F]' : 'text-[#9EB0BD]'
-                  }`}>
-                    {sport}
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>
+                    {loading ? 'Création...' : 'Créer l\'événement'}
                   </Text>
                 </TouchableOpacity>
-              ))}
+              </View>
             </View>
           </ScrollView>
-        </View>
 
-        {/* Lieu */}
-        <View className="mb-4">
-          <Text className="text-[#FFFFFF] text-base font-medium mb-2">Lieu *</Text>
-          <View className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840]">
-            <TextInput
-              className="text-[#FFFFFF] text-base"
-              placeholder="Ex: Stade Municipal, Paris"
-              placeholderTextColor="#9EB0BD"
-              value={location}
-              onChangeText={setLocation}
-              maxLength={200}
+          {/* Date Picker Modal */}
+          {showDatePicker && (
+            <DateTimePicker
+              value={date}
+              mode="date"
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowDatePicker(false);
+                if (selectedDate) setDate(selectedDate);
+              }}
+              minimumDate={new Date()}
             />
-          </View>
-        </View>
+          )}
 
-        {/* Date et heure */}
-        <View className="flex-row mb-4">
-          <View className="flex-1 mr-2">
-            <Text className="text-[#FFFFFF] text-base font-medium mb-2">Date *</Text>
-            <TouchableOpacity 
-              onPress={() => setShowDatePicker(true)}
-              className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840] flex-row items-center justify-between"
-            >
-              <Text className="text-[#FFFFFF] text-base">{formatDate(date)}</Text>
-              <Ionicons name="calendar-outline" size={20} color="#9EB0BD" />
-            </TouchableOpacity>
-          </View>
-          <View className="flex-1 ml-2">
-            <Text className="text-[#FFFFFF] text-base font-medium mb-2">Heure *</Text>
-            <TouchableOpacity 
-              onPress={() => setShowTimePicker(true)}
-              className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840] flex-row items-center justify-between"
-            >
-              <Text className="text-[#FFFFFF] text-base">{formatTime(time)}</Text>
-              <Ionicons name="time-outline" size={20} color="#9EB0BD" />
-            </TouchableOpacity>
-          </View>
-        </View>
+          {/* Time Picker Modal */}
+          {showTimePicker && (
+            <DateTimePicker
+              value={time}
+              mode="time"
+              display="default"
+              onChange={(event, selectedDate) => {
+                setShowTimePicker(false);
+                if (selectedDate) setTime(selectedDate);
+              }}
+            />
+          )}
 
-        {/* Participants et prix */}
-        <View className="flex-row mb-6">
-          <View className="flex-1 mr-2">
-            <Text className="text-[#FFFFFF] text-base font-medium mb-2">Max participants *</Text>
-            <View className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840]">
-              <TextInput
-                className="text-[#FFFFFF] text-base"
-                placeholder="Ex: 20"
-                placeholderTextColor="#9EB0BD"
-                value={maxParticipants}
-                onChangeText={setMaxParticipants}
-                keyboardType="numeric"
-                maxLength={3}
-              />
-            </View>
-          </View>
-          <View className="flex-1 ml-2">
-            <Text className="text-[#FFFFFF] text-base font-medium mb-2">Prix (€)</Text>
-            <View className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840]">
-              <TextInput
-                className="text-[#FFFFFF] text-base"
-                placeholder="0 (gratuit)"
-                placeholderTextColor="#9EB0BD"
-                value={price}
-                onChangeText={setPrice}
-                keyboardType="numeric"
-                maxLength={6}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Note */}
-        <View className="bg-[#C4D9EB]/10 border border-[#C4D9EB]/20 rounded-2xl p-4 mb-6">
-          <View className="flex-row items-center mb-2">
-            <Ionicons name="information-circle" size={20} color="#C4D9EB" />
-            <Text className="text-[#C4D9EB] font-medium ml-2">Information</Text>
-          </View>
-          <Text className="text-[#9EB0BD] text-sm">
-            Un groupe de chat sera automatiquement créé pour votre événement. 
-            Les participants pourront s'y retrouver pour discuter.
-          </Text>
-        </View>
-
-        {/* Bottom spacing */}
-        <View className="h-24" />
-      </ScrollView>
-
-      {/* Create Button */}
-      <SafeAreaView edges={['bottom']} className="bg-[#141A1F]">
-        <View className="px-4 pb-4">
-          <TouchableOpacity 
-            className={`bg-[#C4D9EB] rounded-2xl py-4 items-center ${loading ? 'opacity-50' : ''}`}
-            onPress={handleCreateEvent}
-            disabled={loading}
+          {/* Terrain Selection Modal */}
+          <Modal
+            visible={showTerrainModal}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setShowTerrainModal(false)}
           >
-            <Text className="text-[#141A1F] font-bold text-lg">
-              {loading ? 'Création...' : 'Créer l\'événement'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-
-      {/* Date Picker */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={date}
-          mode="date"
-          display="default"
-          minimumDate={new Date()}
-          onChange={onDateChange}
-        />
-      )}
-
-      {/* Time Picker */}
-      {showTimePicker && (
-        <DateTimePicker
-          value={time}
-          mode="time"
-          display="default"
-          onChange={onTimeChange}
-        />
-      )}
-    </SafeAreaView>
+            <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+              <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', flex: 1 }} onTouchEnd={() => setShowTerrainModal(false)} />
+              <View style={{ backgroundColor: 'rgba(255,255,255,0.95)', margin: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', maxHeight: 384 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, padding: 16 }}>
+                  <Text style={{ fontSize: 20, fontWeight: '700', color: '#111' }}>
+                    Choisir un terrain
+                  </Text>
+                  <TouchableOpacity onPress={() => setShowTerrainModal(false)}>
+                    <Ionicons name="close" size={24} color="#666" />
+                  </TouchableOpacity>
+                </View>
+                
+                <ScrollView style={{ maxHeight: 320, paddingHorizontal: 16 }}>
+                  {loadingTerrains ? (
+                    <View style={{ paddingVertical: 32, alignItems: 'center' }}>
+                      <Text style={{ color: '#666' }}>Chargement des terrains...</Text>
+                    </View>
+                  ) : publicTerrains.length === 0 ? (
+                    <View style={{ paddingVertical: 32, alignItems: 'center' }}>
+                      <Text style={{ color: '#666' }}>Aucun terrain trouvé</Text>
+                    </View>
+                  ) : (
+                    <View style={{ gap: 12, paddingBottom: 16 }}>
+                      {publicTerrains.map((terrain) => (
+                        <TouchableOpacity
+                          key={terrain.id}
+                          onPress={() => {
+                            setSelectedTerrain(terrain);
+                            setShowTerrainModal(false);
+                          }}
+                        >
+                          <View style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 16 }}>
+                            <Text style={{ fontWeight: '600', marginBottom: 4, color: '#111' }}>
+                              {terrain.name}
+                            </Text>
+                            <Text style={{ fontSize: 14, color: '#666' }}>
+                              {terrain.address}
+                            </Text>
+                            <Text style={{ fontSize: 12, color: '#666' }}>
+                              {terrain.type}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
+        </SafeAreaView>
+      </LinearGradient>
+    </ImageBackground>
   );
 } 

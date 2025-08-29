@@ -3,41 +3,64 @@ export class GeocodingService {
   // Géocodification simple avec l'API gratuite de Nominatim (OpenStreetMap)
   static async geocodeAddress(address: string): Promise<{ latitude: number; longitude: number } | null> {
     try {
-      const encodedAddress = encodeURIComponent(address);
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1`;
+      console.log('🌍 Tentative de géocodification pour:', address);
       
-      const response = await fetch(url);
+      const encodedAddress = encodeURIComponent(address);
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodedAddress}&limit=1&addressdetails=1`;
+      
+      console.log('🌍 URL de géocodification:', url);
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'TeamUp-App/1.0'
+        }
+      });
+      
+      if (!response.ok) {
+        console.error('❌ Erreur HTTP:', response.status, response.statusText);
+        return null;
+      }
+      
       const data = await response.json();
+      console.log('🌍 Réponse de géocodification:', data);
       
       if (data && data.length > 0) {
-        return {
+        const result = {
           latitude: parseFloat(data[0].lat),
           longitude: parseFloat(data[0].lon)
         };
+        console.log('✅ Géocodification réussie:', result);
+        return result;
       }
       
+      console.log('⚠️ Aucun résultat trouvé pour:', address);
       return null;
     } catch (error) {
-      console.error('Erreur de géocodification:', error);
+      console.error('❌ Erreur de géocodification:', error);
       return null;
     }
   }
 
   // Géocodification avec fallback vers des coordonnées par défaut
   static async getCoordinatesForLocation(location: string): Promise<{ latitude: number; longitude: number }> {
+    console.log('📍 Début de géocodification pour:', location);
+    
     // Essayer la géocodification
     const coordinates = await this.geocodeAddress(location);
     
     if (coordinates) {
+      console.log('✅ Coordonnées obtenues avec succès:', coordinates);
       return coordinates;
     }
     
-    // Fallback vers des coordonnées par défaut (Paris)
-    console.warn(`Impossible de géocoder l'adresse: ${location}. Utilisation des coordonnées par défaut.`);
-    return {
-      latitude: 48.8566,
-      longitude: 2.3522
+    // Fallback vers des coordonnées aléatoires autour de Paris
+    console.warn(`⚠️ Impossible de géocoder l'adresse: ${location}. Utilisation de coordonnées aléatoires autour de Paris.`);
+    const randomCoords = {
+      latitude: 48.8566 + (Math.random() - 0.5) * 0.05, // ±0.05 degrés autour de Paris
+      longitude: 2.3522 + (Math.random() - 0.5) * 0.05
     };
+    console.log('📍 Coordonnées aléatoires utilisées:', randomCoords);
+    return randomCoords;
   }
 
   // Calculer la distance entre deux points (formule de Haversine)

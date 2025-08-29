@@ -15,10 +15,12 @@ export class EventService {
         )
       `)
       .eq('is_active', true)
-      .order('date', { ascending: true });
-    
+      .order('date', { ascending: true })
+      .order('time', { ascending: true });
+
     if (error) throw error;
-    return data;
+
+    return data || [];
   }
 
   // Récupérer un événement par ID
@@ -130,33 +132,63 @@ export class EventService {
 
   // Supprimer un événement (seulement pour l'organisateur)
   static async deleteEvent(eventId: string, userId: string) {
-    // Vérifier que l'utilisateur est bien l'organisateur
-    const { data: event, error: fetchError } = await supabase
-      .from('events')
-      .select('organizer_id')
-      .eq('id', eventId)
-      .single();
+    console.log('🗑️ Tentative de suppression de l\'événement:', eventId, 'par l\'utilisateur:', userId);
+    
+    try {
+      // Vérifier que l'utilisateur est bien l'organisateur
+      const { data: event, error: fetchError } = await supabase
+        .from('events')
+        .select('organizer_id, title')
+        .eq('id', eventId)
+        .single();
 
-    if (fetchError) throw fetchError;
-    if (event.organizer_id !== userId) {
-      throw new Error('Vous n\'êtes pas autorisé à supprimer cet événement');
+      if (fetchError) {
+        console.error('❌ Erreur lors de la récupération de l\'événement:', fetchError);
+        throw fetchError;
+      }
+      
+      if (!event) {
+        throw new Error('Événement non trouvé');
+      }
+      
+      console.log('📋 Événement trouvé:', event.title, 'Organisateur:', event.organizer_id);
+      
+      if (event.organizer_id !== userId) {
+        console.error('❌ Utilisateur non autorisé:', userId, 'vs organisateur:', event.organizer_id);
+        throw new Error('Vous n\'êtes pas autorisé à supprimer cet événement');
+      }
+
+      console.log('✅ Autorisation vérifiée, suppression des participants...');
+
+      // Supprimer d'abord tous les participants
+      const { error: participantsError } = await supabase
+        .from('event_participants')
+        .delete()
+        .eq('event_id', eventId);
+
+      if (participantsError) {
+        console.error('❌ Erreur lors de la suppression des participants:', participantsError);
+        throw participantsError;
+      }
+
+      console.log('✅ Participants supprimés, suppression de l\'événement...');
+
+      // Supprimer l'événement
+      const { error: eventError } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+
+      if (eventError) {
+        console.error('❌ Erreur lors de la suppression de l\'événement:', eventError);
+        throw eventError;
+      }
+
+      console.log('✅ Événement supprimé avec succès:', eventId);
+    } catch (error) {
+      console.error('❌ Erreur générale lors de la suppression:', error);
+      throw error;
     }
-
-    // Supprimer d'abord tous les participants
-    const { error: participantsError } = await supabase
-      .from('event_participants')
-      .delete()
-      .eq('event_id', eventId);
-
-    if (participantsError) throw participantsError;
-
-    // Supprimer l'événement
-    const { error: eventError } = await supabase
-      .from('events')
-      .delete()
-      .eq('id', eventId);
-
-    if (eventError) throw eventError;
   }
 
   // Rechercher des événements par localisation

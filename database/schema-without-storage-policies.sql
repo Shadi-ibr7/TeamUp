@@ -1,5 +1,5 @@
 -- ======================================
--- SCHÉMA COMPLET SANS POLITIQUES DE STOCKAGE
+-- SCHÉMA COMPLET SANS POLITIQUES DE STOCKAGE (EXÉCUTABLE)
 -- ======================================
 
 -- Activer les extensions nécessaires pour la géolocalisation
@@ -12,10 +12,10 @@ VALUES (
   'avatars',
   'avatars',
   true,
-  10485760, -- 10MB limit (augmenté pour les images d'événements)
+  15728640, -- 15MB limit (augmenté pour les images d'événements et du chat)
   ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic']
 ) ON CONFLICT (id) DO UPDATE SET
-  file_size_limit = 10485760,
+  file_size_limit = 15728640,
   allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic'];
 
 -- 1. Table des utilisateurs (extension de auth.users)
@@ -72,8 +72,17 @@ CREATE TABLE IF NOT EXISTS public.messages (
   event_id UUID REFERENCES public.events(id) ON DELETE CASCADE NOT NULL,
   user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
   content TEXT NOT NULL,
+  message_type TEXT CHECK (message_type IN ('text', 'image')) DEFAULT 'text',
+  image_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Ajouter les colonnes manquantes à la table messages existante (si elles n'existent pas)
+ALTER TABLE public.messages 
+ADD COLUMN IF NOT EXISTS message_type TEXT CHECK (message_type IN ('text', 'image')) DEFAULT 'text';
+
+ALTER TABLE public.messages 
+ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 -- 5. Table des localisations utilisateur (pour la géolocalisation)
 CREATE TABLE IF NOT EXISTS public.user_locations (
@@ -94,6 +103,8 @@ CREATE INDEX IF NOT EXISTS idx_event_participants_event_id ON public.event_parti
 CREATE INDEX IF NOT EXISTS idx_event_participants_user_id ON public.event_participants(user_id);
 CREATE INDEX IF NOT EXISTS idx_messages_event_id ON public.messages(event_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_messages_image_url ON public.messages(image_url) WHERE image_url IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_messages_type ON public.messages(message_type);
 
 -- Fonctions pour gérer les participants
 CREATE OR REPLACE FUNCTION increment_participants(event_id UUID)
@@ -152,9 +163,12 @@ BEGIN
     e.current_participants,
     e.organizer_id,
     e.image_url,
-    (ll_to_earth(lat::float8, lng::float8) <-> ll_to_earth(e.latitude::float8, e.longitude::float8)) / 1000 as distance_km
+    CAST((ll_to_earth(lat::float8, lng::float8) <-> ll_to_earth(e.latitude::float8, e.longitude::float8)) / 1000 AS DECIMAL(10, 2)) as distance_km
   FROM public.events e
   WHERE e.is_active = TRUE
+    AND e.date >= CURRENT_DATE
+    AND e.latitude IS NOT NULL
+    AND e.longitude IS NOT NULL
     AND (ll_to_earth(lat::float8, lng::float8) <-> ll_to_earth(e.latitude::float8, e.longitude::float8)) / 1000 <= radius_km
   ORDER BY distance_km;
 END;
@@ -244,6 +258,10 @@ DROP POLICY IF EXISTS "Organizers can update their events" ON public.events;
 CREATE POLICY "Organizers can update their events" ON public.events
   FOR UPDATE USING (auth.uid() = organizer_id);
 
+DROP POLICY IF EXISTS "Organizers can delete their events" ON public.events;
+CREATE POLICY "Organizers can delete their events" ON public.events
+  FOR DELETE USING (auth.uid() = organizer_id);
+
 -- Politiques RLS pour les participants
 DROP POLICY IF EXISTS "Users can view event participants" ON public.event_participants;
 CREATE POLICY "Users can view event participants" ON public.event_participants
@@ -259,12 +277,18 @@ CREATE POLICY "Users can leave events" ON public.event_participants
 
 -- Politiques RLS pour les messages
 DROP POLICY IF EXISTS "Users can view event messages" ON public.messages;
-CREATE POLICY "Users can view event messages" ON public.messages
-  FOR SELECT USING (true);
-
 DROP POLICY IF EXISTS "Users can send messages" ON public.messages;
-CREATE POLICY "Users can send messages" ON public.messages
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Participants can view event messages" ON public.messages;
+DROP POLICY IF EXISTS "Participants can send messages" ON public.messages;
+DROP POLICY IF EXISTS "Authenticated users can view event messages" ON public.messages;
+DROP POLICY IF EXISTS "Authenticated users can send messages" ON public.messages;
+
+-- Politiques plus permissives pour les messages de chat
+CREATE POLICY "Authenticated users can view event messages" ON public.messages
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Authenticated users can send messages" ON public.messages
+  FOR INSERT WITH CHECK (auth.uid() = user_id AND auth.role() = 'authenticated');
 
 -- Politiques RLS pour les localisations
 DROP POLICY IF EXISTS "Users can view nearby locations" ON public.user_locations;
@@ -303,6 +327,62 @@ BEGIN
       FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
   END IF;
 END $$;
+
+-- ======================================
+-- INSTRUCTIONS POUR CONFIGURER LE STOCKAGE
+-- ======================================
+--
+-- Après avoir exécuté ce script, configurez les politiques de stockage manuellement :
+--
+-- 1. Allez dans Supabase Dashboard → Storage → Policies
+-- 2. Cliquez sur le bucket "avatars"
+-- 3. Ajoutez ces politiques :
+--
+-- POLITIQUE 1 : "Users can upload their own avatars"
+-- - Operation : INSERT
+-- - Policy definition : bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]
+--
+-- POLITIQUE 2 : "Avatar images are publicly accessible"
+-- - Operation : SELECT
+-- - Policy definition : bucket_id = 'avatars'
+--
+-- POLITIQUE 3 : "Users can update their own avatars"
+-- - Operation : UPDATE
+-- - Policy definition : bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]
+--
+-- POLITIQUE 4 : "Users can delete their own avatars"
+-- - Operation : DELETE
+-- - Policy definition : bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]
+--
+-- POLITIQUE 5 : "Authenticated users can upload event images"
+-- - Operation : INSERT
+-- - Policy definition : bucket_id = 'avatars' AND auth.role() = 'authenticated'
+--
+-- POLITIQUE 6 : "Authenticated users can update event images"
+-- - Operation : UPDATE
+-- - Policy definition : bucket_id = 'avatars' AND auth.role() = 'authenticated'
+--
+-- POLITIQUE 7 : "Authenticated users can delete event images"
+-- - Operation : DELETE
+-- - Policy definition : bucket_id = 'avatars' AND auth.role() = 'authenticated'
+--
+-- POLITIQUE 8 : "Users can upload chat images"
+-- - Operation : INSERT
+-- - Policy definition : bucket_id = 'avatars' AND name LIKE 'chat/%' AND auth.role() = 'authenticated'
+--
+-- POLITIQUE 9 : "Chat images are publicly accessible"
+-- - Operation : SELECT
+-- - Policy definition : bucket_id = 'avatars' AND name LIKE 'chat/%'
+--
+-- POLITIQUE 10 : "Users can update chat images"
+-- - Operation : UPDATE
+-- - Policy definition : bucket_id = 'avatars' AND name LIKE 'chat/%' AND auth.role() = 'authenticated'
+--
+-- POLITIQUE 11 : "Users can delete chat images"
+-- - Operation : DELETE
+-- - Policy definition : bucket_id = 'avatars' AND name LIKE 'chat/%' AND auth.role() = 'authenticated'
+--
+-- ======================================
 
 -- Message de confirmation
 SELECT 'Schéma créé avec succès! Configurez les politiques de stockage via l''interface Supabase.' as status; 

@@ -1,11 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Dimensions, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
-import { supabase } from '../lib/supabase';
+import { PublicEquipment } from '../lib/services/equipments';
+import { EventService } from '../lib/services/events';
 import ConditionalMap from './components/ConditionalMap';
 
 interface EventType {
@@ -32,15 +33,16 @@ export default function Discover() {
   const { width, height } = Dimensions.get('window');
   const [searchLocation, setSearchLocation] = useState("");
   const [selectedRadius, setSelectedRadius] = useState("5km");
-  const [showList, setShowList] = useState(true); // Commence en mode liste
+  const [showList, setShowList] = useState(true);
   const [selectedEvent, setSelectedEvent] = useState<EventType | null>(null);
   const [userLocation, setUserLocation] = useState<LocationType | null>(null);
   const [mapRef, setMapRef] = useState<any>(null);
   const [events, setEvents] = useState<EventType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showPublicTerrains, setShowPublicTerrains] = useState(false);
   const { user } = useAuth();
+  const router = useRouter();
 
-  // Position initiale (Paris par exemple)
   const initialRegion = {
     latitude: 48.8566,
     longitude: 2.3522,
@@ -48,430 +50,352 @@ export default function Discover() {
     longitudeDelta: 0.0421,
   };
 
-  // Fonction pour obtenir la couleur selon le sport
   const getSportColor = (sportType: string) => {
     const colors: { [key: string]: string } = {
-      'Football': '#22c55e',
-      'Basketball': '#f59e0b',
-      'Tennis': '#0891b2',
-      'Running': '#d97706',
-      'Cycling': '#16a34a',
-      'Swimming': '#06b6d4',
-      'Volleyball': '#8b5cf6',
-      'Badminton': '#ec4899',
-      'Padel': '#10b981',
-      'default': '#6b7280'
+      'Football': '#22c55e', 'Basketball': '#f59e0b', 'Tennis': '#0891b2', 'Running': '#d97706', 
+      'Cycling': '#16a34a', 'Swimming': '#06b6d4', 'Volleyball': '#8b5cf6', 'Badminton': '#ec4899', 
+      'Padel': '#10b981', 'default': '#6b7280'
     };
     return colors[sportType] || colors.default;
   };
 
-  // Fonction pour obtenir l'icône selon le sport
   const getSportIcon = (sportType: string) => {
     const icons: { [key: string]: string } = {
-      'Football': '⚽',
-      'Basketball': '🏀',
-      'Tennis': '🎾',
-      'Running': '🏃‍♂️',
-      'Cycling': '🚴‍♂️',
-      'Swimming': '🏊‍♂️',
-      'Volleyball': '🏐',
-      'Badminton': '🏸',
-      'Padel': '🎾',
-      'default': '🏃‍♂️'
+      'Football': '⚽', 'Basketball': '🏀', 'Tennis': '🎾', 'Running': '🏃‍♂️', 'Cycling': '🚴‍♂️', 
+      'Swimming': '🏊‍♂️', 'Volleyball': '🏐', 'Badminton': '🏸', 'Padel': '🎾', 'default': '🏃‍♂️'
     };
     return icons[sportType] || icons.default;
   };
 
-  // Fonction pour calculer la distance entre deux points
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-    const R = 6371; // Rayon de la Terre en km
+    const R = 6371;
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c;
-    return distance;
+    return R * c;
   };
 
-  // Fonction pour formater la distance
   const formatDistance = (distance: number) => {
-    if (distance < 1) {
-      return `${Math.round(distance * 1000)}m`;
-    } else {
-      return `${distance.toFixed(1)}km`;
-    }
+    if (distance < 1) return `${Math.round(distance * 1000)}m`;
+    else return `${distance.toFixed(1)}km`;
   };
 
-  // Fonction pour formater la date
   const formatEventDate = (date: string, time: string) => {
-    const eventDate = new Date(date + 'T' + time);
+    const eventDate = new Date(`${date}T${time}`);
     const now = new Date();
     const diffTime = eventDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      return `Aujourd'hui ${time}`;
-    } else if (diffDays === 1) {
-      return `Demain ${time}`;
-    } else if (diffDays < 7) {
-      return `${eventDate.toLocaleDateString('fr-FR', { weekday: 'long' })} ${time}`;
-    } else {
-      return eventDate.toLocaleDateString('fr-FR', { 
-        day: 'numeric', 
-        month: 'short' 
-      }) + ` ${time}`;
-    }
+    if (diffDays < 0) return 'Terminé';
+    else if (diffDays === 0) return 'Aujourd\'hui';
+    else if (diffDays === 1) return 'Demain';
+    else return `Dans ${diffDays} jours`;
   };
 
-  // Récupérer les événements depuis Supabase
+  const handleTerrainPress = (terrain: PublicEquipment) => {
+    Alert.alert(
+      terrain.name,
+      `${terrain.type}\n${terrain.address || terrain.city}\n\nVoulez-vous créer un événement sur ce terrain ?`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { 
+          text: 'Créer un événement', 
+          onPress: () => {
+            router.push({
+              pathname: '/create-event',
+              params: { 
+                terrainId: terrain.id,
+                terrainName: terrain.name,
+                terrainAddress: terrain.address || terrain.city
+              }
+            });
+          }
+        }
+      ]
+    );
+  };
+
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      
-      let query = supabase
-        .from('events')
-        .select('*')
-        .eq('status', 'active')
-        .gte('date', new Date().toISOString().split('T')[0])
-        .not('latitude', 'is', null)
-        .not('longitude', 'is', null)
-        .order('date', { ascending: true });
-
-      // Si on a la position utilisateur, utiliser la fonction géospatiale
-      if (userLocation) {
-        const { data, error } = await supabase
-          .rpc('events_nearby', {
-            lat: userLocation.latitude,
-            lng: userLocation.longitude,
-            radius_km: 50 // Rayon de 50km
-          });
-
-        if (error) {
-          console.error('Erreur lors de la récupération des événements:', error);
-          return;
-        }
-
-        // Transformer les données pour la carte
-        const transformedEvents: EventType[] = data.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          location: event.location,
-          distance: formatDistance(parseFloat(event.distance_km) || 0),
-          time: formatEventDate(event.date, event.time),
-          participants: `${event.current_participants || 0}/${event.max_participants}`,
-          color: getSportColor(event.sport_type),
-          icon: getSportIcon(event.sport_type),
-          coordinate: {
-            latitude: parseFloat(event.latitude),
-            longitude: parseFloat(event.longitude)
+      const data = await EventService.getEvents();
+      const radiusKm = parseInt(selectedRadius.replace('km', ''));
+      const transformedEvents: EventType[] = (data || [])
+        .map((event: any) => {
+          let rawDistanceKm: number | null = null;
+          let distance = 'N/A';
+          if (userLocation && event.latitude && event.longitude) {
+            rawDistanceKm = calculateDistance(userLocation.latitude, userLocation.longitude, event.latitude, event.longitude);
+            distance = formatDistance(rawDistanceKm);
           }
-        }));
-
-        setEvents(transformedEvents);
-      } else {
-        // Fallback sans géolocalisation
-        const { data, error } = await query;
-
-        if (error) {
-          console.error('Erreur lors de la récupération des événements:', error);
-          return;
-        }
-
-        // Transformer les données pour la carte
-        const transformedEvents: EventType[] = data.map((event: any) => ({
-          id: event.id,
-          title: event.title,
-          location: event.location,
-          distance: "Distance inconnue",
-          time: formatEventDate(event.date, event.time),
-          participants: `${event.current_participants || 0}/${event.max_participants}`,
-          color: getSportColor(event.sport_type),
-          icon: getSportIcon(event.sport_type),
-          coordinate: {
-            latitude: parseFloat(event.latitude),
-            longitude: parseFloat(event.longitude)
-          }
-        }));
-
-        setEvents(transformedEvents);
-      }
+          return {
+            id: event.id,
+            title: event.title,
+            location: event.location,
+            distance,
+            time: formatEventDate(event.date, event.time),
+            participants: `${event.current_participants || 0}/${event.max_participants || 10}`,
+            color: getSportColor(event.sport_type),
+            icon: getSportIcon(event.sport_type),
+            coordinate: {
+              latitude: event.latitude || 48.8566,
+              longitude: event.longitude || 2.3522
+            },
+            _rawDistanceKm: rawDistanceKm
+          } as any;
+        })
+        .filter((e: any) => true)
+        .map((e: any) => {
+          delete e._rawDistanceKm;
+          return e as EventType;
+        });
+      setEvents(transformedEvents);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Erreur lors du chargement des événements:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Demander la permission de géolocalisation et récupérer les événements
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission refusée', 'Permission de géolocalisation refusée');
-        // Continuer sans géolocalisation
-        fetchEvents();
-        return;
-      }
-
-      let location = await Location.getCurrentPositionAsync({});
-      setUserLocation({
+  const getUserLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      const location = await Location.getCurrentPositionAsync({});
+      const newLocation = {
         latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-
-      // Mettre à jour la région initiale avec la position utilisateur
-      initialRegion.latitude = location.coords.latitude;
-      initialRegion.longitude = location.coords.longitude;
-    })();
-  }, []);
-
-  // Récupérer les événements quand la position utilisateur est disponible
-  useEffect(() => {
-    if (userLocation) {
-      fetchEvents();
-    }
-  }, [userLocation]);
-
-  // Fonction pour centrer sur la position utilisateur
-  const centerOnUserLocation = () => {
-    if (userLocation && mapRef) {
-      mapRef.animateToRegion({
-        ...userLocation,
-        latitudeDelta: 0.0922,
-        longitudeDelta: 0.0421,
-      }, 1000);
+        longitude: location.coords.longitude
+      };
+      setUserLocation(newLocation);
+    } catch (error) {
+      console.error('Erreur lors de l\'obtention de la localisation:', error);
     }
   };
 
-  const EventBottomSheet = ({ event, onClose }: { event: EventType; onClose: () => void }) => (
-    <View className="absolute bottom-0 left-0 right-0 bg-[#2B3840] rounded-t-3xl p-6 border-t border-[#141A1F]">
-      <View className="flex-row items-center justify-between mb-4">
-        <View className="flex-row items-center">
-          <View 
-            className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
-            style={{ backgroundColor: event.color }}
-          >
-            <Text style={{ fontSize: 24 }}>{event.icon}</Text>
+  useEffect(() => {
+    getUserLocation();
+    fetchEvents();
+  }, []);
+
+  const EventBottomSheet = ({ event, onClose }: { event: EventType; onClose: () => void }) => {
+    const [isJoining, setIsJoining] = useState(false);
+    const { user } = useAuth();
+    const router = useRouter();
+
+    const formatDisplayTime = (timeString: string) => {
+      if (timeString === 'Terminé') return 'Terminé';
+      if (timeString === 'Aujourd\'hui') return 'Aujourd\'hui';
+      if (timeString === 'Demain') return 'Demain';
+      return timeString;
+    };
+
+    const handleJoinEvent = async () => {
+      if (!user) {
+        Alert.alert('Connexion requise', 'Vous devez être connecté pour rejoindre un événement');
+        return;
+      }
+      try {
+        setIsJoining(true);
+        await EventService.joinEvent(event.id.toString(), user.id);
+        Alert.alert('Succès', 'Vous avez rejoint l\'événement !', [
+          { text: 'Voir les détails', onPress: () => router.push(`/events/${event.id}`) },
+          { text: 'OK', style: 'cancel' }
+        ]);
+        fetchEvents();
+        onClose();
+      } catch (error: any) {
+        Alert.alert('Erreur', error.message || 'Impossible de rejoindre l\'événement');
+      } finally {
+        setIsJoining(false);
+      }
+    };
+
+    const [currentParticipants, maxParticipants] = event.participants.split('/').map(Number);
+    const isFull = currentParticipants >= maxParticipants;
+
+    return (
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 }}>
+        <View style={{ backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginRight: 12, backgroundColor: event.color }}>
+                <Text style={{ fontSize: 24 }}>{event.icon}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: '#111' }}>{event.title}</Text>
+                <Text style={{ fontSize: 14, color: '#666' }}>{event.location}</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
+              <Ionicons name="close" size={24} color="#666" />
+            </TouchableOpacity>
           </View>
-          <View>
-            <Text className="text-[#FFFFFF] font-bold text-lg">{event.title}</Text>
-            <Text className="text-[#9EB0BD] text-sm">{event.location}</Text>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(0,0,0,0.08)' }}>
+            <View style={{ alignItems: 'center', flex: 1 }}>
+              <Ionicons name="time" size={20} color="#666" />
+              <Text style={{ fontSize: 12, marginTop: 4, color: '#666' }}>{formatDisplayTime(event.time)}</Text>
+            </View>
+            <View style={{ alignItems: 'center', flex: 1 }}>
+              <Ionicons name="people" size={20} color={isFull ? "#ef4444" : "#666"} />
+              <Text style={{ fontSize: 12, marginTop: 4, color: isFull ? "#ef4444" : "#666" }}>{event.participants}</Text>
+            </View>
+            <View style={{ alignItems: 'center', flex: 1 }}>
+              <Ionicons name="location" size={20} color="#666" />
+              <Text style={{ fontSize: 12, marginTop: 4, color: '#666' }}>{event.distance}</Text>
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              onPress={handleJoinEvent}
+              disabled={isFull || isJoining}
+              style={{ 
+                flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center',
+                backgroundColor: isFull ? 'rgba(0,0,0,0.06)' : '#007AFF',
+                opacity: isFull || isJoining ? 0.5 : 1
+              }}
+            >
+              <Text style={{ color: isFull ? '#666' : '#fff', fontWeight: '700' }}>
+                {isJoining ? 'Inscription...' : isFull ? 'Complet' : 'S\'inscrire'}
+              </Text>
+            </TouchableOpacity>
+            
+            <Link href={`/events/${event.id}`} asChild>
+              <TouchableOpacity style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.06)' }}>
+                <Text style={{ color: '#111', fontWeight: '700' }}>Voir détails</Text>
+              </TouchableOpacity>
+            </Link>
           </View>
         </View>
-        <TouchableOpacity onPress={onClose}>
-          <Ionicons name="close" size={24} color="#9EB0BD" />
-        </TouchableOpacity>
       </View>
-      
-      <View className="flex-row items-center mb-3">
-        <Ionicons name="time" size={16} color="#9EB0BD" />
-        <Text className="text-[#FFFFFF] ml-2">{event.time}</Text>
-      </View>
-      
-      <View className="flex-row items-center mb-3">
-        <Ionicons name="location" size={16} color="#9EB0BD" />
-        <Text className="text-[#FFFFFF] ml-2">{event.distance} away</Text>
-      </View>
-      
-      <View className="flex-row items-center mb-4">
-        <Ionicons name="people" size={16} color="#9EB0BD" />
-        <Text className="text-[#FFFFFF] ml-2">{event.participants}</Text>
-      </View>
-      
-      <View className="flex-row space-x-3">
-        <Link href={`/events/${event.id}`} asChild>
-          <TouchableOpacity className="flex-1 bg-[#C4D9EB] py-3 rounded-2xl">
-            <Text className="text-[#141A1F] text-center font-semibold">View Details</Text>
-          </TouchableOpacity>
-        </Link>
-        <TouchableOpacity className="flex-1 bg-[#141A1F] py-3 rounded-2xl">
-          <Text className="text-[#FFFFFF] text-center font-semibold">Get Directions</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#141A1F]">
-      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F2F2F7' }}>
+      <StatusBar barStyle="dark-content" />
       
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-4 bg-[#2B3840]">
-        <TouchableOpacity className="mr-4">
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+      {/* Header simple */}
+      <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.05)' }}>
+          <Ionicons name="arrow-back" size={22} color="#111" />
         </TouchableOpacity>
-        <Text className="text-[#FFFFFF] text-xl font-semibold flex-1">Find a court</Text>
-        <TouchableOpacity onPress={() => setShowList(!showList)}>
-          <Ionicons name={showList ? "map" : "list"} size={24} color="#FFFFFF" />
+        <Text style={{ fontSize: 20, fontWeight: '700', color: '#111' }}>Découvrir</Text>
+        <TouchableOpacity onPress={() => setShowList(!showList)} style={{ padding: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.05)' }}>
+          <Ionicons name={showList ? "map" : "list"} size={22} color="#111" />
         </TouchableOpacity>
       </View>
 
-      {/* Search Bar */}
-      <View className="px-4 py-3 bg-[#2B3840]">
-        <View className="bg-[#141A1F] rounded-2xl px-4 py-3 flex-row items-center">
-          <Ionicons name="search" size={20} color="#9EB0BD" />
-          <TextInput
-            className="text-[#FFFFFF] ml-3 flex-1 text-base"
-            placeholder="Search for events, courts..."
-            placeholderTextColor="#9EB0BD"
-            value={searchLocation}
-            onChangeText={setSearchLocation}
-          />
-          {searchLocation.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchLocation("")}>
-              <Ionicons name="close-circle" size={20} color="#9EB0BD" />
-            </TouchableOpacity>
-          )}
+      {/* Search and Filters */}
+      <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
+        <View style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+            <Ionicons name="search" size={18} color="#666" />
+            <TextInput
+              placeholder="Rechercher un lieu..."
+              placeholderTextColor="#888"
+              value={searchLocation}
+              onChangeText={setSearchLocation}
+              style={{ marginLeft: 8, flex: 1, color: '#111' }}
+            />
+          </View>
+          
+          <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
+            {["1km", "5km", "10km", "25km"].map((radius) => (
+              <TouchableOpacity
+                key={radius}
+                onPress={() => setSelectedRadius(radius)}
+                style={{
+                  paddingHorizontal: 14,
+                  paddingVertical: 8,
+                  borderRadius: 999,
+                  backgroundColor: selectedRadius === radius ? '#007AFF' : 'rgba(0,0,0,0.06)'
+                }}
+              >
+                <Text style={{ color: selectedRadius === radius ? '#fff' : '#111', fontWeight: '600' }}>{radius}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </View>
 
+      {/* Map or List View */}
       {showList ? (
-        // Liste des événements
-        <ScrollView className="flex-1 bg-[#141A1F]">
-          <View className="p-4">
-            {loading ? (
-              <Text className="text-[#9EB0BD] text-center py-8">Loading events...</Text>
-            ) : events.length === 0 ? (
-              <Text className="text-[#9EB0BD] text-center py-8">No events found nearby.</Text>
-            ) : (
-              events.map((event) => (
-                <Link key={event.id} href={`/events/${event.id}`} asChild>
-                  <TouchableOpacity className="bg-[#2B3840] rounded-2xl p-4 mb-3">
-                    <View className="flex-row items-center">
-                      <View 
-                        className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
-                        style={{ backgroundColor: event.color }}
-                      >
+        <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+          {loading ? (
+            <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
+              <Text style={{ color: '#666', fontSize: 16 }}>Chargement des événements...</Text>
+            </View>
+          ) : events.length === 0 ? (
+            <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
+              <Ionicons name="location-outline" size={64} color="#999" />
+              <Text style={{ fontSize: 18, fontWeight: '600', color: '#111', marginTop: 12, marginBottom: 8 }}>
+                Aucun événement à proximité
+              </Text>
+              <Text style={{ textAlign: 'center', color: '#666', marginBottom: 16 }}>
+                Essayez d'augmenter le rayon de recherche
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/create-event')} style={{ paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, backgroundColor: '#007AFF' }}>
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Créer un événement</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ gap: 16, paddingBottom: 16 }}>
+              {events.map((event) => (
+                <TouchableOpacity key={event.id} onPress={() => setSelectedEvent(event)}>
+                  <View style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 16 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginRight: 16, backgroundColor: event.color }}>
                         <Text style={{ fontSize: 24 }}>{event.icon}</Text>
                       </View>
-                      
-                      <View className="flex-1">
-                        <Text className="text-[#FFFFFF] font-bold text-lg">{event.title}</Text>
-                        <View className="flex-row items-center mt-1">
-                          <Ionicons name="location" size={14} color="#9EB0BD" />
-                          <Text className="text-[#9EB0BD] text-sm ml-1">{event.location}</Text>
-                          <Text className="text-[#C4D9EB] text-sm ml-2">• {event.distance}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontWeight: '700', fontSize: 18, marginBottom: 4, color: '#111' }}>{event.title}</Text>
+                        <Text style={{ fontSize: 14, marginBottom: 4, color: '#666' }}>{event.location}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="time" size={14} color="#007AFF" />
+                            <Text style={{ fontSize: 12, marginLeft: 4, color: '#666' }}>{event.time}</Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="people" size={14} color="#007AFF" />
+                            <Text style={{ fontSize: 12, marginLeft: 4, color: '#666' }}>{event.participants}</Text>
+                          </View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons name="location" size={14} color="#007AFF" />
+                            <Text style={{ fontSize: 12, marginLeft: 4, color: '#666' }}>{event.distance}</Text>
+                          </View>
                         </View>
-                        <Text className="text-[#9EB0BD] text-sm mt-1">{event.time}</Text>
-                        <Text className="text-[#FFFFFF] text-sm mt-1">{event.participants}</Text>
                       </View>
-                      
-                      <Ionicons name="chevron-forward" size={20} color="#9EB0BD" />
                     </View>
-                  </TouchableOpacity>
-                </Link>
-              ))
-            )}
-          </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </ScrollView>
       ) : (
-        // Vue carte
-        <View className="flex-1 relative">
+        <View style={{ flex: 1 }}>
           <ConditionalMap
             events={events}
-            onMarkerPress={(event) => setSelectedEvent(event)}
+            onMarkerPress={setSelectedEvent}
             initialRegion={initialRegion}
             mapRef={mapRef}
             setMapRef={setMapRef}
             userLocation={userLocation}
-            onMapPress={() => setSelectedEvent(null)}
-              />
-
-          {/* Contrôles de carte (seulement sur mobile) */}
-          {Platform.OS !== 'web' && (
-            <>
-          <View className="absolute right-4 bottom-24 space-y-2">
-            <TouchableOpacity 
-                  className="w-12 h-12 bg-[#FFFFFF] rounded-full items-center justify-center shadow-lg"
-              onPress={() => {
-                if (mapRef) {
-                  mapRef.animateToRegion({
-                    ...initialRegion,
-                    latitudeDelta: initialRegion.latitudeDelta * 0.5,
-                    longitudeDelta: initialRegion.longitudeDelta * 0.5,
-                  }, 500);
-                }
-              }}
-            >
-                  <Ionicons name="add" size={24} color="#141A1F" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-                  className="w-12 h-12 bg-[#FFFFFF] rounded-full items-center justify-center shadow-lg"
-              onPress={() => {
-                if (mapRef) {
-                  mapRef.animateToRegion({
-                    ...initialRegion,
-                    latitudeDelta: initialRegion.latitudeDelta * 2,
-                    longitudeDelta: initialRegion.longitudeDelta * 2,
-                  }, 500);
-                }
-              }}
-            >
-                  <Ionicons name="remove" size={24} color="#141A1F" />
-            </TouchableOpacity>
-          </View>
-
-          {/* Bouton Ma Position */}
-          <TouchableOpacity 
-                className="absolute right-4 bottom-40 w-12 h-12 bg-[#FFFFFF] rounded-full items-center justify-center shadow-lg"
-            onPress={centerOnUserLocation}
-          >
-                <Ionicons name="locate" size={20} color="#C4D9EB" />
-          </TouchableOpacity>
-            </>
-          )}
-
-          {/* Bouton Menu */}
-          <TouchableOpacity className="absolute left-4 bottom-24 w-12 h-12 bg-[#FFFFFF] rounded-full items-center justify-center shadow-lg">
-            <Ionicons name="menu" size={20} color="#141A1F" />
-          </TouchableOpacity>
+            showPublicTerrains={showPublicTerrains}
+            onTerrainPress={handleTerrainPress}
+          />
         </View>
       )}
 
-      {/* Bottom Sheet pour événement sélectionné */}
+      {/* Event Bottom Sheet */}
       {selectedEvent && (
-        <EventBottomSheet 
-          event={selectedEvent} 
-          onClose={() => setSelectedEvent(null)} 
+        <EventBottomSheet
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
         />
       )}
-
-      {/* Bottom Navigation */}
-      <SafeAreaView edges={['bottom']} className="bg-[#141A1F]">
-        <View className="bg-[#2B3840] flex-row justify-around items-center py-2 px-2 border-t border-[#2B3840]">
-        <Link href="/" asChild>
-          <TouchableOpacity className="items-center">
-              <Ionicons name="home-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Home</Text>
-          </TouchableOpacity>
-        </Link>
-        <Link href="/events" asChild>
-          <TouchableOpacity className="items-center">
-              <Ionicons name="calendar-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Events</Text>
-          </TouchableOpacity>
-        </Link>
-        <TouchableOpacity className="items-center">
-            <Ionicons name="location" size={24} color="#C4D9EB" />
-            <Text className="text-[#C4D9EB] text-xs mt-1 font-medium">Discover</Text>
-        </TouchableOpacity>
-        <Link href="/chat" asChild>
-          <TouchableOpacity className="items-center">
-              <Ionicons name="chatbubble-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Chat</Text>
-          </TouchableOpacity>
-        </Link>
-          <Link href="/profile" asChild>
-        <TouchableOpacity className="items-center">
-              <Ionicons name="person-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Profile</Text>
-        </TouchableOpacity>
-          </Link>
-      </View>
-      </SafeAreaView>
     </SafeAreaView>
   );
 } 

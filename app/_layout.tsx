@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import "../app/global.css";
 import { AuthProvider, useAuth } from '../lib/context/AuthContext';
+import { ThemeProvider } from '../lib/context/ThemeContext';
 
 function LoadingScreen() {
   return (
@@ -67,20 +68,27 @@ function RootLayoutNav() {
       <Stack.Screen name="edit-event/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
       <Stack.Screen name="calendar" options={{ headerShown: false }} />
+      
+      {/* Nouvelles pages de réservation */}
+      <Stack.Screen name="terrains" options={{ headerShown: false }} />
+      <Stack.Screen name="reservation" options={{ headerShown: false }} />
+      <Stack.Screen name="mes-reservations" options={{ headerShown: false }} />
+      <Stack.Screen name="admin/reservations" options={{ headerShown: false }} />
+      
       <Stack.Screen name="auth/login" options={{ headerShown: false }} />
       <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
       <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
       <Stack.Screen name="settings/account" options={{ headerShown: false }} />
       <Stack.Screen name="settings/notifications" options={{ headerShown: false }} />
       <Stack.Screen name="settings/privacy" options={{ headerShown: false }} />
+      <Stack.Screen name="test" options={{ headerShown: false }} />
     </Stack>
   );
 }
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
+  // Supprimer la dépendance à la police manquante
+  const [loaded] = useFonts({});
 
   if (!loaded) {
     return <LoadingScreen />;
@@ -88,10 +96,12 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <RootLayoutNav />
-        <StatusBar style="light" />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <RootLayoutNav />
+          <StatusBar style="light" />
+        </AuthProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

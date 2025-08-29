@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from "expo-router";
 import { useState } from "react";
-import { Alert, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, ImageBackground, KeyboardAvoidingView, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../lib/context/AuthContext";
 
@@ -49,120 +50,241 @@ export default function Signup() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-[#141A1F]">
-      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
-      
-      {/* Header */}
-      <View className="flex-row items-center px-4 py-4">
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
-        </TouchableOpacity>
-      </View>
+    <ImageBackground
+      source={{ uri: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200' }}
+      style={{ flex: 1 }}
+      blurRadius={30}
+    >
+      <LinearGradient
+        colors={['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView style={{ flex: 1 }}>
+          <StatusBar barStyle="dark-content" />
+          
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
+          >
+            <ScrollView 
+              contentContainerStyle={{ flexGrow: 1 }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Header avec bouton retour */}
+              <View style={{ paddingHorizontal: 16, paddingVertical: 16 }}>
+                <TouchableOpacity 
+                  onPress={() => router.back()}
+                  style={{ 
+                    alignSelf: 'flex-start',
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 20,
+                    backgroundColor: 'rgba(255,255,255,0.2)'
+                  }}
+                >
+                  <Text style={{ color: '#000000' }}>Retour</Text>
+                </TouchableOpacity>
+              </View>
 
-      {/* Logo et titre */}
-      <View className="items-center px-4 py-6">
-        <Text className="text-[#FFFFFF] text-3xl font-bold mb-2">Créer un compte</Text>
-        <Text className="text-[#9EB0BD] text-center">Rejoignez la communauté sportive TeamUp</Text>
-      </View>
+              {/* Contenu principal */}
+              <View style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 16, paddingBottom: 32 }}>
+                <View 
+                  style={{ 
+                    padding: 24,
+                    borderRadius: 24,
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.2)'
+                  }}
+                >
+                  {/* Logo et titre */}
+                  <View style={{ alignItems: 'center', marginBottom: 32 }}>
+                    <View 
+                      style={{ 
+                        width: 80,
+                        height: 80,
+                        borderRadius: 40,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 16,
+                        backgroundColor: 'rgba(0,122,255,0.2)'
+                      }}
+                    >
+                      <Ionicons name="person-add" size={40} color="#007AFF" />
+                    </View>
+                    <Text style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 8, color: '#000000' }}>
+                      Créer un compte
+                    </Text>
+                    <Text style={{ textAlign: 'center', color: '#8E8E93' }}>
+                      Rejoignez la communauté sportive TeamUp
+                    </Text>
+                  </View>
 
-      {/* Formulaire */}
-      <View className="flex-1 px-4">
-        <View className="mb-4">
-          <Text className="text-[#FFFFFF] text-base font-medium mb-2">Nom complet</Text>
-          <View className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840]">
-            <TextInput
-              className="text-[#FFFFFF] text-base"
-              placeholder="Votre nom complet"
-              placeholderTextColor="#9EB0BD"
-              value={name}
-              onChangeText={setName}
-              autoCapitalize="words"
-              autoCorrect={false}
-            />
-          </View>
-        </View>
+                  {/* Formulaire */}
+                  <View style={{ gap: 16 }}>
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 8, color: '#000000' }}>
+                        Nom complet
+                      </Text>
+                      <View 
+                        style={{ 
+                          borderRadius: 16,
+                          paddingHorizontal: 16,
+                          paddingVertical: 16,
+                          backgroundColor: 'rgba(255,255,255,0.1)',
+                          borderWidth: 1,
+                          borderColor: 'rgba(255,255,255,0.2)'
+                        }}
+                      >
+                        <TextInput
+                          style={{ fontSize: 16, color: '#000000' }}
+                          placeholder="Votre nom complet"
+                          placeholderTextColor="#8E8E93"
+                          value={name}
+                          onChangeText={setName}
+                          autoCapitalize="words"
+                          autoCorrect={false}
+                        />
+                      </View>
+                    </View>
 
-        <View className="mb-4">
-          <Text className="text-[#FFFFFF] text-base font-medium mb-2">Email</Text>
-          <View className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840]">
-            <TextInput
-              className="text-[#FFFFFF] text-base"
-              placeholder="votre@email.com"
-              placeholderTextColor="#9EB0BD"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-          </View>
-        </View>
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 8, color: '#000000' }}>
+                        Email
+                      </Text>
+                      <View 
+                        style={{ 
+                          borderRadius: 16,
+                          paddingHorizontal: 16,
+                          paddingVertical: 16,
+                          backgroundColor: 'rgba(255,255,255,0.1)',
+                          borderWidth: 1,
+                          borderColor: 'rgba(255,255,255,0.2)'
+                        }}
+                      >
+                        <TextInput
+                          style={{ fontSize: 16, color: '#000000' }}
+                          placeholder="votre@email.com"
+                          placeholderTextColor="#8E8E93"
+                          value={email}
+                          onChangeText={setEmail}
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                        />
+                      </View>
+                    </View>
 
-        <View className="mb-4">
-          <Text className="text-[#FFFFFF] text-base font-medium mb-2">Mot de passe</Text>
-          <View className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840] flex-row items-center">
-            <TextInput
-              className="text-[#FFFFFF] text-base flex-1"
-              placeholder="Mot de passe"
-              placeholderTextColor="#9EB0BD"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Ionicons 
-                name={showPassword ? "eye-off" : "eye"} 
-                size={20} 
-                color="#9EB0BD" 
-                />
-              </TouchableOpacity>
-          </View>
-        </View>
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 8, color: '#000000' }}>
+                        Mot de passe
+                      </Text>
+                      <View 
+                        style={{ 
+                          borderRadius: 16,
+                          paddingHorizontal: 16,
+                          paddingVertical: 16,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: 'rgba(255,255,255,0.1)',
+                          borderWidth: 1,
+                          borderColor: 'rgba(255,255,255,0.2)'
+                        }}
+                      >
+                        <TextInput
+                          style={{ flex: 1, fontSize: 16, color: '#000000' }}
+                          placeholder="Mot de passe"
+                          placeholderTextColor="#8E8E93"
+                          value={password}
+                          onChangeText={setPassword}
+                          secureTextEntry={!showPassword}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                        />
+                        <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                          <Ionicons 
+                            name={showPassword ? "eye-off" : "eye"} 
+                            size={20} 
+                            color="#8E8E93"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
 
-        <View className="mb-6">
-          <Text className="text-[#FFFFFF] text-base font-medium mb-2">Confirmer le mot de passe</Text>
-          <View className="bg-[#2B3840] rounded-2xl px-4 py-4 border border-[#2B3840] flex-row items-center">
-            <TextInput
-              className="text-[#FFFFFF] text-base flex-1"
-              placeholder="Confirmer le mot de passe"
-              placeholderTextColor="#9EB0BD"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry={!showConfirmPassword}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-              <Ionicons 
-                name={showConfirmPassword ? "eye-off" : "eye"} 
-                size={20} 
-                color="#9EB0BD" 
-                />
-              </TouchableOpacity>
-          </View>
-        </View>
+                    <View>
+                      <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 8, color: '#000000' }}>
+                        Confirmer le mot de passe
+                      </Text>
+                      <View 
+                        style={{ 
+                          borderRadius: 16,
+                          paddingHorizontal: 16,
+                          paddingVertical: 16,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: 'rgba(255,255,255,0.1)',
+                          borderWidth: 1,
+                          borderColor: 'rgba(255,255,255,0.2)'
+                        }}
+                      >
+                        <TextInput
+                          style={{ flex: 1, fontSize: 16, color: '#000000' }}
+                          placeholder="Confirmer le mot de passe"
+                          placeholderTextColor="#8E8E93"
+                          value={confirmPassword}
+                          onChangeText={setConfirmPassword}
+                          secureTextEntry={!showConfirmPassword}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                        />
+                        <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                          <Ionicons 
+                            name={showConfirmPassword ? "eye-off" : "eye"} 
+                            size={20} 
+                            color="#8E8E93"
+                          />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
 
-        <TouchableOpacity 
-            className={`bg-[#C4D9EB] rounded-2xl py-4 items-center mb-4 ${loading ? 'opacity-50' : ''}`}
-            onPress={handleSignup}
-            disabled={loading}
-        >
-            <Text className="text-[#141A1F] font-bold text-lg">
-              {loading ? 'Création...' : 'Créer mon compte'}
-            </Text>
-        </TouchableOpacity>
+                  {/* Bouton d'inscription */}
+                  <View style={{ marginTop: 24 }}>
+                    <TouchableOpacity
+                      onPress={handleSignup}
+                      disabled={loading}
+                      style={{ 
+                        paddingVertical: 16,
+                        borderRadius: 16,
+                        alignItems: 'center',
+                        backgroundColor: '#007AFF',
+                        opacity: loading ? 0.5 : 1
+                      }}
+                    >
+                      <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 18 }}>
+                        {loading ? 'Création...' : 'Créer mon compte'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
 
-        <View className="flex-row justify-center">
-          <Text className="text-[#9EB0BD]">Déjà un compte ? </Text>
-          <Link href="/auth/login" asChild>
-            <TouchableOpacity>
-              <Text className="text-[#0F80DB] font-medium">Se connecter</Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
-      </View>
-    </SafeAreaView>
+                  {/* Lien connexion */}
+                  <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24 }}>
+                    <Text style={{ color: '#8E8E93' }}>
+                      Déjà un compte ?{" "}
+                    </Text>
+                    <Link href="/auth/login" asChild>
+                      <Text style={{ fontWeight: '600', color: '#007AFF' }}>
+                        Se connecter
+                      </Text>
+                    </Link>
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      </LinearGradient>
+    </ImageBackground>
   );
 } 

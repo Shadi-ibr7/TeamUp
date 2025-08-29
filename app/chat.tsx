@@ -7,6 +7,16 @@ import { useAuth } from '../lib/context/AuthContext';
 import { ChatService } from '../lib/services/chat';
 import { EventService } from '../lib/services/events';
 
+const COLORS = {
+  background: '#F2F4F7',
+  surface: '#FFFFFF',
+  text: '#0F172A',
+  subtitle: '#475569',
+  muted: '#94A3B8',
+  border: '#E2E8F0',
+  accent: '#3B82F6',
+};
+
 interface ChatGroup {
   id: string;
   eventTitle: string;
@@ -37,14 +47,11 @@ export default function ChatMain() {
   const loadUserEvents = async () => {
     try {
       setLoading(true);
-      // Récupérer les événements de l'utilisateur (événements rejoints)
       const userEvents = await EventService.getUserEvents(user?.id || '');
       
-      // Convertir en format ChatGroup avec les derniers messages
       const groups: ChatGroup[] = await Promise.all(
         userEvents.map(async (event: any) => {
           try {
-            // Récupérer le dernier message de chaque événement
             const lastMessage = await ChatService.getLastMessage(event.id);
             
             return {
@@ -60,7 +67,6 @@ export default function ChatMain() {
               isActive: event.is_active
             };
           } catch (error) {
-            // En cas d'erreur pour un événement spécifique, utiliser des valeurs par défaut
             return {
               id: event.id.toString(),
               eventTitle: event.title,
@@ -80,7 +86,6 @@ export default function ChatMain() {
       setChatGroups(groups);
     } catch (error) {
       console.error('Erreur lors du chargement des groupes de chat:', error);
-      // Utiliser les données mock en cas d'erreur
       setChatGroups(mockChatGroups);
     } finally {
       setLoading(false);
@@ -91,12 +96,12 @@ export default function ChatMain() {
     const icons: { [key: string]: string } = {
       'Football': '⚽',
       'Basketball': '🏀',
-      'Tennis': '🎾',
+      'Tennis': '\ud83c\udfbe',
       'Running': '🏃‍♂️',
       'Cycling': '🚴‍♂️',
       'Swimming': '🏊‍♂️'
     };
-    return icons[sport] || '🏟️';
+    return icons[sport] || '\ud83c\udfdf️';
   };
 
   const getSportColor = (sport: string) => {
@@ -116,20 +121,19 @@ export default function ChatMain() {
     const now = new Date();
     const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
     
-    if (diffInMinutes < 1) return 'Now';
+    if (diffInMinutes < 1) return 'Maintenant';
     if (diffInMinutes < 60) return `${diffInMinutes}m`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
-    return `${Math.floor(diffInMinutes / 1440)}d`;
+    return `${Math.floor(diffInMinutes / 1440)}j`;
   };
 
-  // Données mock de secours
   const mockChatGroups: ChatGroup[] = [
     {
       id: "1",
-      eventTitle: "Football Championship",
+      eventTitle: "Tournoi de foot",
       eventType: "Football",
-      lastMessage: "Great! If you want to join forward this to the group.",
-      lastMessageTime: "15 min",
+      lastMessage: "Salut tout le monde",
+      lastMessageTime: "26j",
       unreadCount: 3,
       participants: 22,
       eventColor: "#22c55e",
@@ -138,39 +142,15 @@ export default function ChatMain() {
     },
     {
       id: "2",
-      eventTitle: "Basketball Tournament",
+      eventTitle: "Match amical",
       eventType: "Basketball",
-      lastMessage: "See you tomorrow at 2 PM!",
-      lastMessageTime: "1h",
+      lastMessage: "Aucun message pour le moment",
+      lastMessageTime: "Nouveau",
       unreadCount: 0,
-      participants: 16,
+      participants: 2,
       eventColor: "#f59e0b",
-      eventIcon: "🏀",
+      eventIcon: "\ud83c\udfc0",
       isActive: true
-    },
-    {
-      id: "3",
-      eventTitle: "Tennis Match",
-      eventType: "Tennis",
-      lastMessage: "Who's bringing the water bottles?",
-      lastMessageTime: "3h",
-      unreadCount: 1,
-      participants: 8,
-      eventColor: "#0891b2",
-      eventIcon: "🎾",
-      isActive: true
-    },
-    {
-      id: "4",
-      eventTitle: "Running Group",
-      eventType: "Running",
-      lastMessage: "Weather looks perfect for tomorrow!",
-      lastMessageTime: "Yesterday",
-      unreadCount: 0,
-      participants: 15,
-      eventColor: "#d97706",
-      eventIcon: "🏃‍♂️",
-      isActive: false
     }
   ];
 
@@ -179,70 +159,21 @@ export default function ChatMain() {
     chat.eventType.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const ChatGroupItem = ({ group }: { group: ChatGroup }) => (
-    <Link href={`/chat/${group.id}`} asChild>
-      <TouchableOpacity className="flex-row items-center px-4 py-4 border-b border-slate-800">
-        {/* Event Icon */}
-        <View 
-          className="w-14 h-14 rounded-full items-center justify-center mr-4"
-          style={{ backgroundColor: group.eventColor }}
-        >
-          <Text style={{ fontSize: 24 }}>{group.eventIcon}</Text>
-        </View>
-
-        {/* Chat Info */}
-        <View className="flex-1">
-          <View className="flex-row items-center justify-between mb-1">
-            <Text className="text-white font-semibold text-lg">{group.eventTitle}</Text>
-            <Text className="text-slate-400 text-sm">{group.lastMessageTime}</Text>
-          </View>
-          
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1 mr-2">
-              <Text className="text-slate-400 text-sm" numberOfLines={1}>
-                {group.lastMessage}
-              </Text>
-              <Text className="text-slate-500 text-xs mt-1">
-                {group.participants} participants
-              </Text>
-            </View>
-            
-            <View className="items-end">
-              {group.unreadCount > 0 && (
-                <View className="bg-blue-500 rounded-full min-w-6 h-6 items-center justify-center px-2">
-                  <Text className="text-white text-xs font-bold">
-                    {group.unreadCount > 99 ? "99+" : group.unreadCount}
-                  </Text>
-                </View>
-              )}
-              {group.isActive && (
-                <View className="w-3 h-3 bg-green-500 rounded-full mt-1" />
-              )}
-            </View>
-          </View>
-        </View>
-      </TouchableOpacity>
-    </Link>
-  );
-
-  // Rediriger vers login si pas connecté
   if (!user) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-900 items-center justify-center">
-        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
-        
-        <View className="items-center px-8">
-          <View className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full items-center justify-center mb-6">
-            <Text className="text-white font-bold text-4xl">T</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+          <View style={{ width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center', marginBottom: 24, backgroundColor: COLORS.accent }}>
+            <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 36 }}>T</Text>
           </View>
-          <Text className="text-white text-3xl font-bold mb-4">Connectez-vous</Text>
-          <Text className="text-slate-400 text-center mb-8">
+          <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '700', marginBottom: 16 }}>Connectez-vous</Text>
+          <Text style={{ color: COLORS.subtitle, textAlign: 'center', marginBottom: 32 }}>
             Vous devez être connecté pour accéder aux chats
           </Text>
-          
           <Link href="/auth/login" asChild>
-            <TouchableOpacity className="bg-blue-500 rounded-2xl py-4 px-8 mb-4 w-full">
-              <Text className="text-white font-bold text-lg text-center">Se connecter</Text>
+            <TouchableOpacity style={{ backgroundColor: COLORS.accent, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 32, marginBottom: 16, width: '100%' }}>
+              <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 18, textAlign: 'center' }}>Se connecter</Text>
             </TouchableOpacity>
           </Link>
         </View>
@@ -251,26 +182,26 @@ export default function ChatMain() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#141A1F]">
-      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-4 bg-[#141A1F]">
-        <Text className="text-[#FFFFFF] text-2xl font-bold">Messages</Text>
-        <TouchableOpacity onPress={() => setShowSearch(!showSearch)}>
-          <Ionicons name="search-outline" size={24} color="#C4D9EB" />
+      {/* Header clair */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}>
+        <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '700' }}>Messages</Text>
+        <TouchableOpacity onPress={() => setShowSearch(!showSearch)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border }}>
+          <Ionicons name="search-outline" size={18} color={COLORS.text} />
         </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
       {showSearch && (
-        <View className="px-4 py-2">
-          <View className="bg-[#2B3840] rounded-2xl px-4 py-3 flex-row items-center border border-[#2B3840]">
-            <Ionicons name="search" size={20} color="#9EB0BD" />
+        <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+          <View style={{ backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
+            <Ionicons name="search" size={18} color={COLORS.muted} />
             <TextInput
-              className="flex-1 ml-3 text-[#FFFFFF] text-base"
+              style={{ marginLeft: 10, flex: 1, color: COLORS.text, fontSize: 16 }}
               placeholder="Rechercher une conversation..."
-              placeholderTextColor="#9EB0BD"
+              placeholderTextColor={COLORS.muted}
               value={searchText}
               onChangeText={setSearchText}
             />
@@ -279,45 +210,48 @@ export default function ChatMain() {
       )}
 
       {/* Chat List */}
-      <ScrollView className="flex-1 px-4" showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
         {loading ? (
-          <View className="flex-1 justify-center items-center py-20">
-            <Text className="text-[#9EB0BD] text-lg">Chargement des messages...</Text>
+          <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
+            <Text style={{ color: COLORS.subtitle, fontSize: 16 }}>Chargement des messages...</Text>
           </View>
         ) : filteredChats.length === 0 ? (
-          <View className="flex-1 justify-center items-center py-20">
-            <Ionicons name="chatbubble-outline" size={64} color="#9EB0BD" />
-            <Text className="text-[#9EB0BD] text-lg font-medium mt-4 mb-2">Aucun message</Text>
-            <Text className="text-[#9EB0BD] text-center">Rejoignez un événement pour commencer à discuter</Text>
+          <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
+            <Ionicons name="chatbubble-outline" size={48} color={COLORS.muted} />
+            <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '600', marginTop: 16, marginBottom: 8 }}>Aucun message</Text>
+            <Text style={{ color: COLORS.subtitle, textAlign: 'center' }}>Rejoignez un événement pour commencer à discuter</Text>
           </View>
         ) : (
-          <View className="pb-4">
+          <View style={{ paddingBottom: 16 }}>
             {filteredChats.map((chat) => (
               <TouchableOpacity
                 key={chat.id}
-                className="bg-[#2B3840] rounded-2xl p-4 mb-3 border border-[#2B3840]"
+                style={{ backgroundColor: COLORS.surface, borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
                 onPress={() => router.push(`/chat/${chat.id}`)}
               >
-                <View className="flex-row items-center">
-                  <View className="w-12 h-12 bg-[#C4D9EB] rounded-full items-center justify-center mr-3">
-                    <Text className="text-[#141A1F] font-bold text-lg">
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ width: 48, height: 48, backgroundColor: '#EEF2FF', borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: COLORS.border }}>
+                    <Text style={{ color: COLORS.text, fontWeight: '700', fontSize: 18 }}>
                       {chat.eventTitle?.charAt(0) || 'E'}
                     </Text>
                   </View>
-                  <View className="flex-1">
-                    <Text className="text-[#FFFFFF] font-bold text-lg">{chat.eventTitle}</Text>
-                    <Text className="text-[#9EB0BD] text-sm" numberOfLines={1}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: COLORS.text, fontWeight: '700', fontSize: 16 }}>{chat.eventTitle}</Text>
+                    <Text style={{ color: COLORS.subtitle, fontSize: 13 }}>
                       {chat.lastMessage || 'Aucun message'}
                     </Text>
+                    <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>
+                      {chat.participants} participants
+                    </Text>
                   </View>
-                  <View className="items-end">
-                    <Text className="text-[#C4D9EB] text-xs">
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ color: COLORS.muted, fontSize: 12, marginBottom: 8 }}>
                       {chat.lastMessageTime || ''}
                     </Text>
                     {chat.unreadCount > 0 && (
-                      <View className="bg-[#C4D9EB] rounded-full w-6 h-6 items-center justify-center mt-1">
-                        <Text className="text-[#141A1F] text-xs font-bold">
-                          {chat.unreadCount}
+                      <View style={{ backgroundColor: COLORS.accent, borderRadius: 999, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
+                        <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '700' }}>
+                          {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
                         </Text>
                       </View>
                     )}
@@ -329,39 +263,37 @@ export default function ChatMain() {
         )}
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <SafeAreaView edges={['bottom']} className="bg-[#141A1F]">
-        <View className="bg-[#2B3840] flex-row justify-around items-center py-2 px-2 border-t border-[#2B3840]">
-          <Link href="/" asChild>
-            <TouchableOpacity className="items-center">
-              <Ionicons name="home-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Home</Text>
-            </TouchableOpacity>
-          </Link>
-          <Link href="/events" asChild>
-            <TouchableOpacity className="items-center">
-              <Ionicons name="calendar-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Events</Text>
-            </TouchableOpacity>
-          </Link>
-          <Link href="/discover" asChild>
-            <TouchableOpacity className="items-center">
-              <Ionicons name="location-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Discover</Text>
-            </TouchableOpacity>
-          </Link>
-          <TouchableOpacity className="items-center">
-            <Ionicons name="chatbubble" size={24} color="#C4D9EB" />
-            <Text className="text-[#C4D9EB] text-xs mt-1 font-medium">Chat</Text>
+      {/* Bottom Navigation clair */}
+      <View style={{ backgroundColor: COLORS.surface, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, borderTopWidth: 1, borderColor: COLORS.border }}>
+        <Link href="/" asChild>
+          <TouchableOpacity style={{ alignItems: 'center' }}>
+            <Ionicons name="home-outline" size={22} color={COLORS.muted} />
+            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>Home</Text>
           </TouchableOpacity>
-          <Link href="/profile" asChild>
-            <TouchableOpacity className="items-center">
-              <Ionicons name="person-outline" size={24} color="#9EB0BD" />
-              <Text className="text-[#9EB0BD] text-xs mt-1">Profile</Text>
-            </TouchableOpacity>
-          </Link>
-        </View>
-      </SafeAreaView>
+        </Link>
+        <Link href="/events" asChild>
+          <TouchableOpacity style={{ alignItems: 'center' }}>
+            <Ionicons name="calendar-outline" size={22} color={COLORS.muted} />
+            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>Events</Text>
+          </TouchableOpacity>
+        </Link>
+        <Link href="/discover" asChild>
+          <TouchableOpacity style={{ alignItems: 'center' }}>
+            <Ionicons name="location-outline" size={22} color={COLORS.muted} />
+            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>Discover</Text>
+          </TouchableOpacity>
+        </Link>
+        <TouchableOpacity style={{ alignItems: 'center' }}>
+          <Ionicons name="chatbubble" size={22} color={COLORS.accent} />
+          <Text style={{ color: COLORS.accent, fontSize: 12, marginTop: 4, fontWeight: '600' }}>Chat</Text>
+        </TouchableOpacity>
+        <Link href="/profile" asChild>
+          <TouchableOpacity style={{ alignItems: 'center' }}>
+            <Ionicons name="person-outline" size={22} color={COLORS.muted} />
+            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>Profile</Text>
+          </TouchableOpacity>
+        </Link>
+      </View>
     </SafeAreaView>
   );
 } 

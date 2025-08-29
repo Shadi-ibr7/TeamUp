@@ -4,50 +4,73 @@
     "slug": "teamup",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0f172a"
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.teamup.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "This app uses location to show nearby sports events and courts."
+        "NSLocationWhenInUseUsageDescription": "This app uses location to show nearby sports events and courts.",
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#0f172a"
       },
+      "package": "com.teamup.app",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "VIBRATE",
+        "WAKE_LOCK"
       ]
     },
     "web": {
-      "favicon": "./assets/images/favicon.png",
       "bundler": "metro"
     },
     "plugins": [
+      "expo-router",
       [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow TeamUp to use your location to find nearby sports events and courts."
         }
       ],
-      "expo-maps"
+      [
+        "expo-notifications",
+        {
+          "color": "#3b82f6"
+        }
+      ]
     ],
     "scheme": "teamup",
     "platforms": [
       "ios",
       "android",
       "web"
-    ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "8c5d9a8c-5a8d-4630-a401-e2d71af92b76"
+      }
+    },
+    "owner": "shadi-ibr7"
   }
 }
