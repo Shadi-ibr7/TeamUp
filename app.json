@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
+    "icon": "./assets/assets/images/logo.png",
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#0f172a"
@@ -15,6 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.teamup.app",
+      "icon": "./assets/assets/images/logo.png",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "This app uses location to show nearby sports events and courts.",
         "UIBackgroundModes": [
@@ -24,6 +26,7 @@
     },
     "android": {
       "adaptiveIcon": {
+        "foregroundImage": "./assets/assets/images/logo.png",
         "backgroundColor": "#0f172a"
       },
       "package": "com.teamup.app",
@@ -40,7 +43,8 @@
       ]
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "favicon": "./assets/assets/images/logo.png"
     },
     "plugins": [
       "expo-router",

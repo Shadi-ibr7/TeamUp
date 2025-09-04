@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
-import { ImageBackground, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ImageBackground, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Welcome() {
@@ -28,23 +28,12 @@ export default function Welcome() {
                 borderColor: 'rgba(255,255,255,0.2)'
               }}
             >
-              <View 
-                style={{ 
-                  width: 96,
-                  height: 96,
-                  borderRadius: 48,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginBottom: 24,
-                  backgroundColor: 'rgba(0,122,255,0.2)'
-                }}
-              >
-                <Text style={{ fontWeight: 'bold', fontSize: 48, color: '#007AFF' }}>T</Text>
-              </View>
+              <Image
+                source={require('../assets/assets/images/logo.png')}
+                style={{ width: 120, height: 120, marginBottom: 24, resizeMode: 'contain' as any }}
+              />
               
-              <Text style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 16, color: '#000000' }}>
-                TeamUp!
-              </Text>
+              <View style={{ height: 0 }} />
               
               <Text style={{ textAlign: 'center', marginBottom: 32, color: '#8E8E93' }}>
                 Rejoignez la communauté sportive et trouvez vos partenaires de jeu
