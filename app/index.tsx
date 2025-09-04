@@ -410,41 +410,7 @@ export default function Index() {
         )}
       </ScrollView>
 
-      {/* Bottom nav simplifiée */}
-      <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
-        <View style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 8 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
-            <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
-              <Ionicons name="home" size={24} color="#007AFF" />
-              <Text style={{ fontSize: 12, marginTop: 4, fontWeight: '600', color: '#007AFF' }}>Home</Text>
-            </TouchableOpacity>
-            <Link href="/events" asChild>
-              <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
-                <Ionicons name="calendar-outline" size={24} color="#666" />
-                <Text style={{ fontSize: 12, marginTop: 4, color: '#666' }}>Events</Text>
-              </TouchableOpacity>
-            </Link>
-            <Link href="/discover" asChild>
-              <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
-                <Ionicons name="location-outline" size={24} color="#666" />
-                <Text style={{ fontSize: 12, marginTop: 4, color: '#666' }}>Discover</Text>
-              </TouchableOpacity>
-            </Link>
-            <Link href="/chat" asChild>
-              <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
-                <Ionicons name="chatbubble-outline" size={24} color="#666" />
-                <Text style={{ fontSize: 12, marginTop: 4, color: '#666' }}>Chat</Text>
-              </TouchableOpacity>
-            </Link>
-            <Link href="/profile" asChild>
-              <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
-                <Ionicons name="person-outline" size={24} color="#666" />
-                <Text style={{ fontSize: 12, marginTop: 4, color: '#666' }}>Profile</Text>
-              </TouchableOpacity>
-            </Link>
-          </View>
-        </View>
-      </View>
+      {/* Bottom nav déplacée dans le layout global */}
     </SafeAreaView>
   );
 }

@@ -6,6 +6,7 @@ import { ActivityIndicator, Text, View } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import "../app/global.css";
+import BottomNav from '../components/BottomNav';
 import { AuthProvider, useAuth } from '../lib/context/AuthContext';
 import { ThemeProvider } from '../lib/context/ThemeContext';
 
@@ -99,6 +100,7 @@ export default function RootLayout() {
       <ThemeProvider>
         <AuthProvider>
           <RootLayoutNav />
+          <BottomNav />
           <StatusBar style="light" />
         </AuthProvider>
       </ThemeProvider>

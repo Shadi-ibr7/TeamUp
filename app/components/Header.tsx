@@ -1,114 +1,185 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { StatusBar, Text, TouchableOpacity, View } from "react-native";
-import { useAuth } from "../../lib/context/AuthContext";
+import { Link } from "expo-router";
+import { Text, TouchableOpacity, View } from "react-native";
 import { useTheme } from "../../lib/context/ThemeContext";
-import { NotificationService } from "../../lib/services/notifications";
 
 interface HeaderProps {
   title: string;
-  showBack?: boolean;
-  rightComponent?: React.ReactNode;
+  showBackButton?: boolean;
+  onBackPress?: () => void;
+  rightAction?: {
+    icon: keyof typeof Ionicons.glyphMap;
+    onPress: () => void;
+  };
+  showThemeToggle?: boolean;
 }
 
-export default function Header({ title, showBack = false, rightComponent }: HeaderProps) {
-  const router = useRouter();
-  const { user } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
-  const [notificationCount, setNotificationCount] = useState(0);
-
-  useEffect(() => {
-    if (user) {
-      loadNotificationCount();
-      // Recharger le compteur toutes les 30 secondes
-      const interval = setInterval(loadNotificationCount, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
-
-  const loadNotificationCount = async () => {
-    try {
-      const count = await NotificationService.getUnreadCount();
-      setNotificationCount(count);
-    } catch (error) {
-      console.error('Erreur lors du chargement du compteur de notifications:', error);
-    }
-  };
-
-  const handleNotificationPress = () => {
-    router.push('/notifications');
-  };
+export default function Header({ title, showBackButton = false, onBackPress, rightAction, showThemeToggle = true }: HeaderProps) {
+  const { isDarkMode, toggleTheme, colors } = useTheme();
 
   return (
-    <View 
-      className={`flex-row items-center justify-between px-4 py-4 border-b ${
-        isDark 
-          ? 'bg-slate-800 border-slate-700' 
-          : 'bg-white border-gray-200'
-      }`}
-    >
-      <StatusBar 
-        barStyle={isDark ? "light-content" : "dark-content"} 
-        backgroundColor={isDark ? "#1e293b" : "#ffffff"} 
-      />
+    <View style={{ 
+      flexDirection: 'row', 
+      alignItems: 'center', 
+      justifyContent: 'space-between', 
+      paddingHorizontal: 16, 
+      paddingVertical: 16,
+      backgroundColor: colors.background
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        {showBackButton && (
+          <TouchableOpacity onPress={onBackPress} style={{ marginRight: 12 }}>
+            <Ionicons name="arrow-back" size={24} color={colors.primary} />
+          </TouchableOpacity>
+        )}
+        <Text style={{ fontSize: 24, fontWeight: '700', color: colors.foreground }}>{title}</Text>
+      </View>
       
-      <View className="flex-row items-center flex-1">
-        {showBack && (
-          <TouchableOpacity
-            onPress={() => router.back()}
-            className="mr-3"
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {showThemeToggle && (
+          <TouchableOpacity 
+            onPress={toggleTheme} 
+            style={{ 
+              width: 36, 
+              height: 36, 
+              borderRadius: 18, 
+              backgroundColor: colors.card, 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              borderWidth: 1, 
+              borderColor: colors.border,
+              marginRight: rightAction ? 8 : 0
+            }}
           >
             <Ionicons 
-              name="arrow-back" 
-              size={24} 
-              color={isDark ? "white" : "black"} 
+              name={isDarkMode ? "sunny" : "moon"} 
+              size={18} 
+              color={colors.foreground} 
             />
           </TouchableOpacity>
         )}
         
-        <Text 
-          className={`text-xl font-bold flex-1 ${
-            isDark ? 'text-white' : 'text-gray-900'
-          }`}
-        >
-          {title}
-        </Text>
-      </View>
-
-      <View className="flex-row items-center space-x-3">
-        {/* Bouton de notifications */}
-        {user && (
-          <TouchableOpacity
-            onPress={handleNotificationPress}
-            className="relative"
+        {rightAction && (
+          <TouchableOpacity 
+            onPress={rightAction.onPress}
+            style={{ 
+              width: 36, 
+              height: 36, 
+              borderRadius: 18, 
+              backgroundColor: colors.card, 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              borderWidth: 1, 
+              borderColor: colors.border
+            }}
           >
-            <Ionicons 
-              name="notifications" 
-              size={24} 
-              color={isDark ? "white" : "black"} 
-            />
-            {notificationCount > 0 && (
-              <View className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[18px] h-[18px] items-center justify-center">
-                <Text className="text-white text-xs font-bold">
-                  {notificationCount > 99 ? '99+' : notificationCount}
-                </Text>
-              </View>
-            )}
+            <Ionicons name={rightAction.icon} size={18} color={colors.primary} />
           </TouchableOpacity>
         )}
+      </View>
+    </View>
+  );
+}
 
-        {/* Bouton de thème */}
-        <TouchableOpacity onPress={toggleTheme}>
-          <Ionicons 
-            name={isDark ? "sunny" : "moon"} 
-            size={24} 
-            color={isDark ? "white" : "black"} 
-          />
-        </TouchableOpacity>
+export function BottomNav({ activeTab }: { activeTab: 'home' | 'events' | 'discover' | 'chat' | 'profile' }) {
+  const { colors } = useTheme();
 
-        {/* Composant personnalisé à droite */}
-        {rightComponent}
+  return (
+    <View style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: colors.background }}>
+      <View style={{ 
+        backgroundColor: colors.card, 
+        borderRadius: 16, 
+        borderWidth: 1, 
+        borderColor: colors.border, 
+        padding: 8 
+      }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }}>
+          <Link href="/" asChild>
+            <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
+              <Ionicons 
+                name="home" 
+                size={24} 
+                color={activeTab === 'home' ? colors.primary : colors.muted} 
+              />
+              <Text style={{ 
+                fontSize: 12, 
+                marginTop: 4, 
+                fontWeight: activeTab === 'home' ? '600' : '400', 
+                color: activeTab === 'home' ? colors.primary : colors.muted 
+              }}>
+                Home
+              </Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/events" asChild>
+            <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
+              <Ionicons 
+                name="calendar-outline" 
+                size={24} 
+                color={activeTab === 'events' ? colors.primary : colors.muted} 
+              />
+              <Text style={{ 
+                fontSize: 12, 
+                marginTop: 4, 
+                fontWeight: activeTab === 'events' ? '600' : '400', 
+                color: activeTab === 'events' ? colors.primary : colors.muted 
+              }}>
+                Events
+              </Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/discover" asChild>
+            <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
+              <Ionicons 
+                name="location-outline" 
+                size={24} 
+                color={activeTab === 'discover' ? colors.primary : colors.muted} 
+              />
+              <Text style={{ 
+                fontSize: 12, 
+                marginTop: 4, 
+                fontWeight: activeTab === 'discover' ? '600' : '400', 
+                color: activeTab === 'discover' ? colors.primary : colors.muted 
+              }}>
+                Discover
+              </Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/chat" asChild>
+            <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
+              <Ionicons 
+                name="chatbubble-outline" 
+                size={24} 
+                color={activeTab === 'chat' ? colors.primary : colors.muted} 
+              />
+              <Text style={{ 
+                fontSize: 12, 
+                marginTop: 4, 
+                fontWeight: activeTab === 'chat' ? '600' : '400', 
+                color: activeTab === 'chat' ? colors.primary : colors.muted 
+              }}>
+                Chat
+              </Text>
+            </TouchableOpacity>
+          </Link>
+          <Link href="/profile" asChild>
+            <TouchableOpacity style={{ alignItems: 'center', paddingVertical: 8 }}>
+              <Ionicons 
+                name="person-outline" 
+                size={24} 
+                color={activeTab === 'profile' ? colors.primary : colors.muted} 
+              />
+              <Text style={{ 
+                fontSize: 12, 
+                marginTop: 4, 
+                fontWeight: activeTab === 'profile' ? '600' : '400', 
+                color: activeTab === 'profile' ? colors.primary : colors.muted 
+              }}>
+                Profile
+              </Text>
+            </TouchableOpacity>
+          </Link>
+        </View>
       </View>
     </View>
   );

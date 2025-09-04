@@ -263,37 +263,7 @@ export default function Events() {
         )}
       </ScrollView>
 
-      {/* Bottom Navigation clair (inchangé fonctionnellement) */}
-      <View style={{ backgroundColor: COLORS.surface, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 8, borderTopWidth: 1, borderColor: COLORS.border }}>
-        <Link href="/" asChild>
-          <TouchableOpacity style={{ alignItems: 'center' }}>
-            <Ionicons name="home-outline" size={22} color={COLORS.muted} />
-            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>Home</Text>
-          </TouchableOpacity>
-        </Link>
-        <TouchableOpacity style={{ alignItems: 'center' }}>
-          <Ionicons name="calendar" size={22} color={COLORS.accent} />
-          <Text style={{ color: COLORS.accent, fontSize: 12, marginTop: 4, fontWeight: '600' }}>Events</Text>
-        </TouchableOpacity>
-        <Link href="/discover" asChild>
-          <TouchableOpacity style={{ alignItems: 'center' }}>
-            <Ionicons name="location-outline" size={22} color={COLORS.muted} />
-            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>Discover</Text>
-          </TouchableOpacity>
-        </Link>
-        <Link href="/chat" asChild>
-          <TouchableOpacity style={{ alignItems: 'center' }}>
-            <Ionicons name="chatbubble-outline" size={22} color={COLORS.muted} />
-            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>Chat</Text>
-          </TouchableOpacity>
-        </Link>
-        <Link href="/profile" asChild>
-          <TouchableOpacity style={{ alignItems: 'center' }}>
-            <Ionicons name="person-outline" size={22} color={COLORS.muted} />
-            <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>Profile</Text>
-          </TouchableOpacity>
-        </Link>
-      </View>
+
     </SafeAreaView>
   );
 } 
