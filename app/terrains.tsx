@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
+import { useTheme } from '../lib/context/ThemeContext';
 import { EquipmentSearchParams, EquipmentService, PublicEquipment } from '../lib/services/equipments';
 
 interface TerrainItemProps {
@@ -21,56 +22,61 @@ interface TerrainItemProps {
   onPress: () => void;
 }
 
-const TerrainItem: React.FC<TerrainItemProps> = ({ equipment, onPress }) => (
-  <TouchableOpacity style={styles.terrainItem} onPress={onPress}>
-    <View style={styles.terrainHeader}>
-      <Text style={styles.terrainName}>{equipment.name}</Text>
-      <View style={styles.terrainType}>
-        <Ionicons name="football" size={16} color="#3b82f6" />
-        <Text style={styles.terrainTypeText}>{equipment.type}</Text>
-      </View>
-    </View>
-    
-    <View style={styles.terrainDetails}>
-      <View style={styles.detailRow}>
-        <Ionicons name="location" size={14} color="#64748b" />
-        <Text style={styles.detailText}>
-          {equipment.address}, {equipment.city} ({equipment.department})
-        </Text>
+const TerrainItem: React.FC<TerrainItemProps> = ({ equipment, onPress }) => {
+  const { isDarkMode, colors } = useTheme();
+
+  return (
+    <TouchableOpacity style={[styles.terrainItem, { backgroundColor: isDarkMode ? colors.card : '#1e293b', borderColor: isDarkMode ? colors.border : '#334155' }]} onPress={onPress}>
+      <View style={styles.terrainHeader}>
+        <Text style={[styles.terrainName, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}>{equipment.name}</Text>
+        <View style={[styles.terrainType, { backgroundColor: isDarkMode ? colors.input : '#0f172a' }]}>
+          <Ionicons name="football" size={16} color={colors.primary} />
+          <Text style={[styles.terrainTypeText, { color: colors.primary }]}>{equipment.type}</Text>
+        </View>
       </View>
       
-      {equipment.manager_name && (
+      <View style={styles.terrainDetails}>
         <View style={styles.detailRow}>
-          <Ionicons name="business" size={14} color="#64748b" />
-          <Text style={styles.detailText}>{equipment.manager_name}</Text>
+          <Ionicons name="location" size={14} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+          <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>
+            {equipment.address}, {equipment.city} ({equipment.department})
+          </Text>
         </View>
-      )}
+        
+        {equipment.manager_name && (
+          <View style={styles.detailRow}>
+            <Ionicons name="business" size={14} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+            <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>{equipment.manager_name}</Text>
+          </View>
+        )}
+        
+        {equipment.accessibility && (
+          <View style={styles.detailRow}>
+            <Ionicons name="accessibility" size={14} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+            <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>{equipment.accessibility}</Text>
+          </View>
+        )}
+      </View>
       
-      {equipment.accessibility && (
-        <View style={styles.detailRow}>
-          <Ionicons name="accessibility" size={14} color="#64748b" />
-          <Text style={styles.detailText}>{equipment.accessibility}</Text>
-        </View>
-      )}
-    </View>
-    
-    <View style={styles.terrainActions}>
-      <TouchableOpacity style={styles.actionButton}>
-        <Ionicons name="calendar" size={16} color="#3b82f6" />
-        <Text style={styles.actionButtonText}>Réserver</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity style={styles.actionButton}>
-        <Ionicons name="map" size={16} color="#64748b" />
-        <Text style={styles.actionButtonText}>Voir sur la carte</Text>
-      </TouchableOpacity>
-    </View>
-  </TouchableOpacity>
-);
+      <View style={styles.terrainActions}>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: isDarkMode ? colors.input : '#0f172a' }]}>
+          <Ionicons name="calendar" size={16} color={colors.primary} />
+          <Text style={[styles.actionButtonText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Réserver</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: isDarkMode ? colors.input : '#0f172a' }]}>
+          <Ionicons name="map" size={16} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+          <Text style={[styles.actionButtonText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Voir sur la carte</Text>
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 export default function TerrainsScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { isDarkMode, colors } = useTheme();
   const [equipments, setEquipments] = useState<PublicEquipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -177,10 +183,13 @@ export default function TerrainsScreen() {
     isSelected: boolean
   ) => (
     <TouchableOpacity
-      style={[styles.filterChip, isSelected && styles.filterChipSelected]}
+      style={[
+        styles.filterChip, 
+        { backgroundColor: isSelected ? colors.primary : (isDarkMode ? colors.input : '#1e293b'), borderColor: isSelected ? colors.primary : (isDarkMode ? colors.border : '#334155') }
+      ]}
       onPress={onPress}
     >
-      <Text style={[styles.filterChipText, isSelected && styles.filterChipTextSelected]}>
+      <Text style={[styles.filterChipText, { color: isSelected ? '#ffffff' : (isDarkMode ? colors.mutedForeground : '#64748b') }]}>
         {title}
       </Text>
     </TouchableOpacity>
@@ -188,20 +197,20 @@ export default function TerrainsScreen() {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingText}>Chargement des terrains...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Chargement des terrains...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={{ flex: 1 }}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Terrains Publics</Text>
+      <View style={[styles.header, { borderBottomColor: isDarkMode ? colors.border : '#1e293b' }]}>
+        <Text style={[styles.title, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}>Terrains Publics</Text>
         <TouchableOpacity
           style={styles.syncButton}
           onPress={() => {
@@ -232,33 +241,33 @@ export default function TerrainsScreen() {
             );
           }}
         >
-          <Ionicons name="refresh" size={24} color="#3b82f6" />
+          <Ionicons name="refresh" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Barre de recherche */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#64748b" style={styles.searchIcon} />
+      <View style={[styles.searchContainer, { backgroundColor: isDarkMode ? colors.input : '#1e293b' }]}>
+        <Ionicons name="search" size={20} color={isDarkMode ? colors.mutedForeground : '#64748b'} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}
           placeholder="Rechercher un terrain..."
           value={searchTerm}
           onChangeText={setSearchTerm}
-          placeholderTextColor="#64748b"
+          placeholderTextColor={isDarkMode ? colors.mutedForeground : '#64748b'}
         />
         {searchTerm ? (
           <TouchableOpacity onPress={() => setSearchTerm('')}>
-            <Ionicons name="close-circle" size={20} color="#64748b" />
+            <Ionicons name="close-circle" size={20} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
           </TouchableOpacity>
         ) : null}
       </View>
 
       {/* Filtres */}
       <View style={styles.filtersContainer}>
-        <Text style={styles.filtersTitle}>Filtres :</Text>
+        <Text style={[styles.filtersTitle, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}>Filtres :</Text>
         
         <View style={styles.filtersRow}>
-          <Text style={styles.filterLabel}>Type :</Text>
+          <Text style={[styles.filterLabel, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Type :</Text>
           <FlatList
             horizontal
             data={types.slice(0, 10)}
@@ -277,7 +286,7 @@ export default function TerrainsScreen() {
         </View>
 
         <View style={styles.filtersRow}>
-          <Text style={styles.filterLabel}>Département :</Text>
+          <Text style={[styles.filterLabel, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Département :</Text>
           <FlatList
             horizontal
             data={departments.slice(0, 10)}
@@ -312,9 +321,9 @@ export default function TerrainsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="football-outline" size={64} color="#64748b" />
-            <Text style={styles.emptyText}>Aucun terrain trouvé</Text>
-            <Text style={styles.emptySubtext}>
+            <Ionicons name="football-outline" size={64} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+            <Text style={[styles.emptyText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Aucun terrain trouvé</Text>
+            <Text style={[styles.emptySubtext, { color: isDarkMode ? colors.mutedForeground : '#475569' }]}>
               Essayez de modifier vos filtres ou votre recherche
             </Text>
           </View>
@@ -325,10 +334,6 @@ export default function TerrainsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -336,12 +341,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#f8fafc',
   },
   syncButton: {
     padding: 8,
@@ -351,7 +354,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 20,
     marginVertical: 16,
-    backgroundColor: '#1e293b',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -361,7 +363,6 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: '#f8fafc',
     fontSize: 16,
   },
   filtersContainer: {
@@ -371,7 +372,6 @@ const styles = StyleSheet.create({
   filtersTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#f8fafc',
     marginBottom: 12,
   },
   filtersRow: {
@@ -381,7 +381,6 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 14,
-    color: '#64748b',
     marginRight: 12,
     minWidth: 80,
   },
@@ -389,36 +388,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   filterChip: {
-    backgroundColor: '#1e293b',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: '#334155',
-  },
-  filterChipSelected: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
-  },
-  filterChipText: {
-    fontSize: 12,
-    color: '#64748b',
-  },
-  filterChipTextSelected: {
-    color: '#ffffff',
   },
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
   terrainItem: {
-    backgroundColor: '#1e293b',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#334155',
   },
   terrainHeader: {
     flexDirection: 'row',
@@ -429,20 +413,17 @@ const styles = StyleSheet.create({
   terrainName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#f8fafc',
     flex: 1,
   },
   terrainType: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
   },
   terrainTypeText: {
     fontSize: 12,
-    color: '#3b82f6',
     marginLeft: 4,
   },
   terrainDetails: {
@@ -455,7 +436,6 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
-    color: '#64748b',
     marginLeft: 8,
     flex: 1,
   },
@@ -466,7 +446,6 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0f172a',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -475,7 +454,6 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 12,
-    color: '#64748b',
     marginLeft: 4,
   },
   loadingContainer: {
@@ -486,7 +464,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#64748b',
   },
   emptyContainer: {
     flex: 1,
@@ -497,12 +474,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#64748b',
     marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#475569',
     textAlign: 'center',
     marginTop: 8,
     paddingHorizontal: 40,

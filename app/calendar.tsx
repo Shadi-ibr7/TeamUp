@@ -1,9 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { useState } from "react";
-import { SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { useTheme } from '../lib/context/ThemeContext';
 
 export default function Calendar() {
+  const { isDarkMode, colors } = useTheme();
   const [selectedDate, setSelectedDate] = useState(5); // 5 octobre comme sur la photo
   const [currentMonth, setCurrentMonth] = useState("October");
   const [currentYear, setCurrentYear] = useState("2024");
@@ -125,80 +127,79 @@ export default function Calendar() {
 
   const EventCard = ({ event }) => (
     <Link href={`/events/${event.id}`} asChild>
-      <TouchableOpacity className="bg-slate-800 rounded-2xl p-4 mb-3 border border-slate-700">
-        <View className="flex-row items-center">
+      <TouchableOpacity style={{ backgroundColor: isDarkMode ? colors.card : '#f8f9fa', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: isDarkMode ? colors.border : '#e9ecef' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <View 
-            className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
-            style={{ backgroundColor: event.color }}
+            style={{ width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 16, backgroundColor: event.color }}
           >
             <Text style={{ fontSize: 24 }}>{event.icon}</Text>
           </View>
           
-          <View className="flex-1">
-            <Text className="text-white font-bold text-lg">{event.title}</Text>
-            <Text className="text-slate-400 text-sm">{event.type}</Text>
-            <View className="flex-row items-center mt-1">
-              <Ionicons name="time" size={14} color="#64748b" />
-              <Text className="text-slate-400 text-sm ml-1">{event.time}</Text>
-              <Ionicons name="location" size={14} color="#64748b" className="ml-3" />
-              <Text className="text-slate-400 text-sm ml-1">{event.location}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontWeight: 'bold', fontSize: 18 }}>{event.title}</Text>
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 14 }}>{event.type}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+              <Ionicons name="time" size={14} color={isDarkMode ? colors.mutedForeground : '#666'} />
+              <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 14, marginLeft: 4 }}>{event.time}</Text>
+              <Ionicons name="location" size={14} color={isDarkMode ? colors.mutedForeground : '#666'} style={{ marginLeft: 12 }} />
+              <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 14, marginLeft: 4 }}>{event.location}</Text>
             </View>
-            <Text className="text-blue-400 text-sm mt-1">{event.participants}</Text>
+            <Text style={{ color: colors.primary, fontSize: 14, marginTop: 4 }}>{event.participants}</Text>
           </View>
           
-          <Ionicons name="chevron-forward" size={20} color="#64748b" />
+          <Ionicons name="chevron-forward" size={20} color={isDarkMode ? colors.mutedForeground : '#666'} />
         </View>
       </TouchableOpacity>
     </Link>
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-900">
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* StatusBar géré globalement */}
       
       {/* Header */}
-      <View className="flex-row justify-between items-center px-4 py-4">
-        <Text className="text-white text-2xl font-bold">Sports Events</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16 }}>
+        <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 24, fontWeight: 'bold' }}>Sports Events</Text>
         <TouchableOpacity>
-          <Ionicons name="options-outline" size={24} color="white" />
+          <Ionicons name="options-outline" size={24} color={isDarkMode ? colors.foreground : '#111'} />
         </TouchableOpacity>
       </View>
 
       {/* Calendar Navigation */}
-      <View className="flex-row justify-between items-center px-4 py-4">
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16 }}>
         <TouchableOpacity onPress={() => navigateMonth('prev')}>
-          <Ionicons name="chevron-back" size={24} color="white" />
+          <Ionicons name="chevron-back" size={24} color={isDarkMode ? colors.foreground : '#111'} />
         </TouchableOpacity>
         
-        <Text className="text-white text-xl font-semibold">
+        <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 20, fontWeight: '600' }}>
           {currentMonth} {currentYear}
         </Text>
         
         <TouchableOpacity onPress={() => navigateMonth('next')}>
-          <Ionicons name="chevron-forward" size={24} color="white" />
+          <Ionicons name="chevron-forward" size={24} color={isDarkMode ? colors.foreground : '#111'} />
         </TouchableOpacity>
       </View>
 
       {/* Days of Week Header */}
-      <View className="flex-row justify-around px-4 py-2">
+      <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 16, paddingVertical: 8 }}>
         {daysOfWeek.map((day, index) => (
-          <View key={index} className="w-10 h-10 items-center justify-center">
-            <Text className="text-slate-400 font-medium text-sm">{day}</Text>
+          <View key={index} style={{ width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontWeight: '500', fontSize: 14 }}>{day}</Text>
           </View>
         ))}
       </View>
 
       {/* Calendar Grid */}
-      <View className="px-4 mb-6">
+      <View style={{ paddingHorizontal: 16, marginBottom: 24 }}>
         {/* Generate calendar weeks */}
         {[0, 1, 2, 3, 4, 5].map((week) => (
-          <View key={week} className="flex-row justify-around mb-2">
+          <View key={week} style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 8 }}>
             {[0, 1, 2, 3, 4, 5, 6].map((day) => {
               const dayIndex = week * 7 + day;
               const calendarDay = calendarDays[dayIndex];
               
               if (calendarDay === null || calendarDay === undefined) {
-                return <View key={dayIndex} className="w-10 h-10" />;
+                return <View key={dayIndex} style={{ width: 40, height: 40 }} />;
               }
               
               const isSelected = calendarDay === selectedDate;
@@ -208,25 +209,32 @@ export default function Calendar() {
                 <TouchableOpacity
                   key={dayIndex}
                   onPress={() => setSelectedDate(calendarDay)}
-                  className={`w-10 h-10 rounded-full items-center justify-center ${
-                    isSelected 
-                      ? 'bg-blue-500' 
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: isSelected 
+                      ? colors.primary 
                       : hasEvents 
-                      ? 'bg-slate-700' 
-                      : 'bg-transparent'
-                  }`}
+                        ? (isDarkMode ? colors.input : '#666')
+                        : 'transparent'
+                  }}
                 >
-                  <Text className={`font-medium text-base ${
-                    isSelected 
-                      ? 'text-white' 
+                  <Text style={{
+                    fontWeight: '500',
+                    fontSize: 16,
+                    color: isSelected 
+                      ? '#fff' 
                       : hasEvents 
-                      ? 'text-white' 
-                      : 'text-slate-300'
-                  }`}>
+                        ? (isDarkMode ? colors.foreground : '#fff')
+                        : (isDarkMode ? colors.mutedForeground : '#666')
+                  }}>
                     {calendarDay}
                   </Text>
                   {hasEvents && !isSelected && (
-                    <View className="absolute bottom-1 w-1 h-1 bg-blue-400 rounded-full" />
+                    <View style={{ position: 'absolute', bottom: 4, width: 4, height: 4, backgroundColor: colors.primary, borderRadius: 2 }} />
                   )}
                 </TouchableOpacity>
               );
@@ -236,9 +244,9 @@ export default function Calendar() {
       </View>
 
       {/* Upcoming Events Section */}
-      <View className="flex-1">
-        <View className="px-4 mb-4">
-          <Text className="text-white text-xl font-bold">
+      <View style={{ flex: 1 }}>
+        <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
+          <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 20, fontWeight: 'bold' }}>
             {selectedEvents.length > 0 
               ? `Events on ${currentMonth} ${selectedDate}` 
               : 'Upcoming Events'
@@ -247,7 +255,7 @@ export default function Calendar() {
         </View>
 
         <ScrollView 
-          className="flex-1 px-4" 
+          style={{ flex: 1, paddingHorizontal: 16 }} 
           showsVerticalScrollIndicator={false}
         >
           {selectedEvents.length > 0 ? (
@@ -255,19 +263,19 @@ export default function Calendar() {
               <EventCard key={event.id} event={event} />
             ))
           ) : (
-            <View className="flex-1 items-center justify-center py-20">
-              <Ionicons name="calendar-outline" size={48} color="#64748b" />
-              <Text className="text-slate-400 text-lg mt-4">No events on this date</Text>
-              <Text className="text-slate-500 text-sm mt-2">Select a different date or create an event</Text>
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 80 }}>
+              <Ionicons name="calendar-outline" size={48} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+              <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 18, marginTop: 16 }}>No events on this date</Text>
+              <Text style={{ color: isDarkMode ? colors.mutedForeground : '#888', fontSize: 14, marginTop: 8 }}>Select a different date or create an event</Text>
               
-              <TouchableOpacity className="bg-blue-500 px-6 py-3 rounded-2xl mt-6">
-                <Text className="text-white font-semibold">Create Event</Text>
+              <TouchableOpacity style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 16, marginTop: 24 }}>
+                <Text style={{ color: '#fff', fontWeight: '600' }}>Create Event</Text>
               </TouchableOpacity>
             </View>
           )}
           
           {/* Bottom spacing */}
-          <View className="h-24" />
+          <View style={{ height: 96 }} />
         </ScrollView>
       </View>
 

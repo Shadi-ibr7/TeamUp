@@ -1,20 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Image, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from '../lib/context/AuthContext';
+import { useTheme } from '../lib/context/ThemeContext';
 import { EventService } from '../lib/services/events';
 
-const COLORS = {
-  background: '#F2F4F7',
-  surface: '#FFFFFF',
-  text: '#0F172A',
-  subtitle: '#475569',
-  muted: '#94A3B8',
-  border: '#E2E8F0',
-  accent: '#3B82F6',
-};
+// Les couleurs sont maintenant gérées par le ThemeContext
 
 // Fonctions utilitaires
 const getSportIcon = (sport: string) => {
@@ -70,6 +63,7 @@ export default function Events() {
   const [selectedFilter, setSelectedFilter] = useState('All');
 
   const { user } = useAuth();
+  const { isDarkMode, colors } = useTheme();
   const router = useRouter();
 
   useEffect(() => {
@@ -135,18 +129,18 @@ export default function Events() {
 
   if (!user) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* StatusBar géré globalement */}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-          <View style={{ width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center', marginBottom: 24, backgroundColor: COLORS.accent }}>
+          <View style={{ width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center', marginBottom: 24, backgroundColor: colors.primary }}>
             <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 36 }}>T</Text>
           </View>
-          <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '700', marginBottom: 16 }}>Connectez-vous</Text>
-          <Text style={{ color: COLORS.subtitle, textAlign: 'center', marginBottom: 32 }}>
+          <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 24, fontWeight: '700', marginBottom: 16 }}>Connectez-vous</Text>
+          <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', textAlign: 'center', marginBottom: 32 }}>
             Vous devez être connecté pour voir vos événements
           </Text>
           <Link href="/auth/login" asChild>
-            <TouchableOpacity style={{ backgroundColor: COLORS.accent, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 32, marginBottom: 16, width: '100%' }}>
+            <TouchableOpacity style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 32, marginBottom: 16, width: '100%' }}>
               <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 18, textAlign: 'center' }}>Se connecter</Text>
             </TouchableOpacity>
           </Link>
@@ -156,25 +150,25 @@ export default function Events() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* StatusBar géré globalement */}
 
-      {/* Header clair */}
+      {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}>
-        <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '700' }}>Événements</Text>
-        <TouchableOpacity onPress={() => router.push('/create-event')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border }}>
-          <Ionicons name="add" size={20} color={COLORS.text} />
+        <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 24, fontWeight: '700' }}>Événements</Text>
+        <TouchableOpacity onPress={() => router.push('/create-event')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.6)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)' }}>
+          <Ionicons name="add" size={20} color={isDarkMode ? colors.foreground : '#111'} />
         </TouchableOpacity>
       </View>
 
       {/* Barre de recherche */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-        <View style={{ backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
-          <Ionicons name="search" size={18} color={COLORS.muted} />
+        <View style={{ backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.6)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
+          <Ionicons name="search" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} />
           <TextInput
-            style={{ marginLeft: 10, flex: 1, color: COLORS.text, fontSize: 16 }}
+            style={{ marginLeft: 10, flex: 1, color: isDarkMode ? colors.foreground : '#111', fontSize: 16 }}
             placeholder="Rechercher des événements..."
-            placeholderTextColor={COLORS.muted}
+            placeholderTextColor={isDarkMode ? colors.mutedForeground : '#666'}
             value={searchText}
             onChangeText={setSearchText}
           />
@@ -188,9 +182,9 @@ export default function Events() {
             <TouchableOpacity
               key={filter}
               onPress={() => setSelectedFilter(filter)}
-              style={{ marginRight: 10, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: selectedFilter === filter ? COLORS.accent : COLORS.surface, borderWidth: 1, borderColor: selectedFilter === filter ? COLORS.accent : COLORS.border }}
+              style={{ marginRight: 10, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: selectedFilter === filter ? colors.primary : (isDarkMode ? colors.card : 'rgba(255,255,255,0.6)'), borderWidth: 1, borderColor: selectedFilter === filter ? colors.primary : (isDarkMode ? colors.border : 'rgba(0,0,0,0.08)') }}
             >
-              <Text style={{ fontWeight: '600', color: selectedFilter === filter ? '#ffffff' : COLORS.text }}>{filter}</Text>
+              <Text style={{ fontWeight: '600', color: selectedFilter === filter ? '#ffffff' : (isDarkMode ? colors.foreground : '#111') }}>{filter}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -200,14 +194,14 @@ export default function Events() {
       <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
         {loading ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-            <Text style={{ color: COLORS.subtitle, fontSize: 16 }}>Chargement des événements...</Text>
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 16 }}>Chargement des événements...</Text>
           </View>
         ) : events.length === 0 ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-            <Ionicons name="calendar-outline" size={48} color={COLORS.muted} />
-            <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '600', marginTop: 16, marginBottom: 8 }}>Aucun événement trouvé</Text>
-            <Text style={{ color: COLORS.subtitle, textAlign: 'center' }}>Créez votre premier événement pour commencer</Text>
-            <TouchableOpacity style={{ backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12, marginTop: 20 }} onPress={() => router.push('/create-event')}>
+            <Ionicons name="calendar-outline" size={48} color={isDarkMode ? colors.mutedForeground : '#666'} />
+            <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 18, fontWeight: '600', marginTop: 16, marginBottom: 8 }}>Aucun événement trouvé</Text>
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', textAlign: 'center' }}>Créez votre premier événement pour commencer</Text>
+            <TouchableOpacity style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 12, marginTop: 20 }} onPress={() => router.push('/create-event')}>
               <Text style={{ color: '#fff', fontWeight: '600' }}>Créer un événement</Text>
             </TouchableOpacity>
           </View>
@@ -216,42 +210,42 @@ export default function Events() {
             {events.map((event) => (
               <TouchableOpacity
                 key={event.id}
-                style={{ backgroundColor: COLORS.surface, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
+                style={{ backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.6)', borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)', overflow: 'hidden', shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
                 onPress={() => router.push(`/events/${event.id}`)}
               >
                 {event.image_url ? (
                   <Image source={{ uri: event.image_url }} style={{ width: '100%', height: 120 }} resizeMode="cover" />
                 ) : (
-                  <View style={{ width: '100%', height: 120, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: COLORS.border }}>
-                    <Ionicons name="image-outline" size={40} color={COLORS.muted} />
-                    <Text style={{ color: COLORS.muted, fontSize: 13, marginTop: 6 }}>Aucune image</Text>
+                  <View style={{ width: '100%', height: 120, backgroundColor: isDarkMode ? colors.input : '#F8FAFC', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderBottomColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)' }}>
+                    <Ionicons name="image-outline" size={40} color={isDarkMode ? colors.mutedForeground : '#666'} />
+                    <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 13, marginTop: 6 }}>Aucune image</Text>
                   </View>
                 )}
                 
                 <View style={{ padding: 14 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                    <View style={{ width: 44, height: 44, backgroundColor: '#EEF2FF', borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: COLORS.border }}>
-                      <Text style={{ color: COLORS.text, fontWeight: '700', fontSize: 16 }}>
+                    <View style={{ width: 44, height: 44, backgroundColor: isDarkMode ? colors.input : '#EEF2FF', borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)' }}>
+                      <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontWeight: '700', fontSize: 16 }}>
                         {event.sport_type?.charAt(0) || 'E'}
                       </Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ color: COLORS.text, fontWeight: '700', fontSize: 16 }}>{event.title}</Text>
-                      <Text style={{ color: COLORS.subtitle, fontSize: 13 }}>{event.sport_type}</Text>
+                      <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontWeight: '700', fontSize: 16 }}>{event.title}</Text>
+                      <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 13 }}>{event.sport_type}</Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ color: COLORS.text, fontWeight: '600' }}>{formatEventDate(event.date)}</Text>
-                      <Text style={{ color: COLORS.subtitle, fontSize: 13 }}>{event.time}</Text>
+                      <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontWeight: '600' }}>{formatEventDate(event.date)}</Text>
+                      <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 13 }}>{event.time}</Text>
                     </View>
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Ionicons name="location-outline" size={16} color={COLORS.muted} />
-                      <Text style={{ color: COLORS.subtitle, fontSize: 13, marginLeft: 4 }}>{event.location}</Text>
+                      <Ionicons name="location-outline" size={16} color={isDarkMode ? colors.mutedForeground : '#666'} />
+                      <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 13, marginLeft: 4 }}>{event.location}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <Ionicons name="people-outline" size={16} color={COLORS.muted} />
-                      <Text style={{ color: COLORS.subtitle, fontSize: 13, marginLeft: 4 }}>
+                      <Ionicons name="people-outline" size={16} color={isDarkMode ? colors.mutedForeground : '#666'} />
+                      <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 13, marginLeft: 4 }}>
                         {event.current_participants || 0}/{event.max_participants || 'Illimité'}
                       </Text>
                     </View>

@@ -2,9 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Link, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Dimensions, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
+import { useTheme } from '../lib/context/ThemeContext';
 import { PublicEquipment } from '../lib/services/equipments';
 import { EventService } from '../lib/services/events';
 import ConditionalMap from './components/ConditionalMap';
@@ -41,6 +42,7 @@ export default function Discover() {
   const [loading, setLoading] = useState(true);
   const [showPublicTerrains, setShowPublicTerrains] = useState(false);
   const { user } = useAuth();
+  const { isDarkMode, colors } = useTheme();
   const router = useRouter();
 
   const initialRegion = {
@@ -215,34 +217,34 @@ export default function Discover() {
 
     return (
       <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16 }}>
-        <View style={{ backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 16 }}>
+        <View style={{ backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.95)', borderRadius: 16, borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)', padding: 16 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginRight: 12, backgroundColor: event.color }}>
                 <Text style={{ fontSize: 24 }}>{event.icon}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#111' }}>{event.title}</Text>
-                <Text style={{ fontSize: 14, color: '#666' }}>{event.location}</Text>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: isDarkMode ? colors.foreground : '#111' }}>{event.title}</Text>
+                <Text style={{ fontSize: 14, color: isDarkMode ? colors.mutedForeground : '#666' }}>{event.location}</Text>
               </View>
             </View>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
-              <Ionicons name="close" size={24} color="#666" />
+              <Ionicons name="close" size={24} color={isDarkMode ? colors.mutedForeground : '#666'} />
             </TouchableOpacity>
           </View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(0,0,0,0.08)' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)' }}>
             <View style={{ alignItems: 'center', flex: 1 }}>
-              <Ionicons name="time" size={20} color="#666" />
-              <Text style={{ fontSize: 12, marginTop: 4, color: '#666' }}>{formatDisplayTime(event.time)}</Text>
+              <Ionicons name="time" size={20} color={isDarkMode ? colors.mutedForeground : '#666'} />
+              <Text style={{ fontSize: 12, marginTop: 4, color: isDarkMode ? colors.mutedForeground : '#666' }}>{formatDisplayTime(event.time)}</Text>
             </View>
             <View style={{ alignItems: 'center', flex: 1 }}>
-              <Ionicons name="people" size={20} color={isFull ? "#ef4444" : "#666"} />
-              <Text style={{ fontSize: 12, marginTop: 4, color: isFull ? "#ef4444" : "#666" }}>{event.participants}</Text>
+              <Ionicons name="people" size={20} color={isFull ? "#ef4444" : (isDarkMode ? colors.mutedForeground : "#666")} />
+              <Text style={{ fontSize: 12, marginTop: 4, color: isFull ? "#ef4444" : (isDarkMode ? colors.mutedForeground : "#666") }}>{event.participants}</Text>
             </View>
             <View style={{ alignItems: 'center', flex: 1 }}>
-              <Ionicons name="location" size={20} color="#666" />
-              <Text style={{ fontSize: 12, marginTop: 4, color: '#666' }}>{event.distance}</Text>
+              <Ionicons name="location" size={20} color={isDarkMode ? colors.mutedForeground : "#666"} />
+              <Text style={{ fontSize: 12, marginTop: 4, color: isDarkMode ? colors.mutedForeground : '#666' }}>{event.distance}</Text>
             </View>
           </View>
 
@@ -252,18 +254,18 @@ export default function Discover() {
               disabled={isFull || isJoining}
               style={{ 
                 flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center',
-                backgroundColor: isFull ? 'rgba(0,0,0,0.06)' : '#007AFF',
+                backgroundColor: isFull ? (isDarkMode ? colors.input : 'rgba(0,0,0,0.06)') : colors.primary,
                 opacity: isFull || isJoining ? 0.5 : 1
               }}
             >
-              <Text style={{ color: isFull ? '#666' : '#fff', fontWeight: '700' }}>
+              <Text style={{ color: isFull ? (isDarkMode ? colors.mutedForeground : '#666') : '#fff', fontWeight: '700' }}>
                 {isJoining ? 'Inscription...' : isFull ? 'Complet' : 'S\'inscrire'}
               </Text>
             </TouchableOpacity>
             
             <Link href={`/events/${event.id}`} asChild>
-              <TouchableOpacity style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.06)' }}>
-                <Text style={{ color: '#111', fontWeight: '700' }}>Voir détails</Text>
+              <TouchableOpacity style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.06)' }}>
+                <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontWeight: '700' }}>Voir détails</Text>
               </TouchableOpacity>
             </Link>
           </View>
@@ -273,31 +275,31 @@ export default function Discover() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F2F2F7' }}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* StatusBar géré globalement */}
       
       {/* Header simple */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.05)' }}>
-          <Ionicons name="arrow-back" size={22} color="#111" />
+        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, borderRadius: 999, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+          <Ionicons name="arrow-back" size={22} color={isDarkMode ? colors.foreground : '#111'} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: '700', color: '#111' }}>Découvrir</Text>
-        <TouchableOpacity onPress={() => setShowList(!showList)} style={{ padding: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.05)' }}>
-          <Ionicons name={showList ? "map" : "list"} size={22} color="#111" />
+        <Text style={{ fontSize: 20, fontWeight: '700', color: isDarkMode ? colors.foreground : '#111' }}>Découvrir</Text>
+        <TouchableOpacity onPress={() => setShowList(!showList)} style={{ padding: 8, borderRadius: 999, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+          <Ionicons name={showList ? "map" : "list"} size={22} color={isDarkMode ? colors.foreground : '#111'} />
         </TouchableOpacity>
       </View>
 
       {/* Search and Filters */}
       <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-        <View style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
-            <Ionicons name="search" size={18} color="#666" />
+        <View style={{ backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)', padding: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+            <Ionicons name="search" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} />
             <TextInput
               placeholder="Rechercher un lieu..."
-              placeholderTextColor="#888"
+              placeholderTextColor={isDarkMode ? colors.mutedForeground : '#888'}
               value={searchLocation}
               onChangeText={setSearchLocation}
-              style={{ marginLeft: 8, flex: 1, color: '#111' }}
+              style={{ marginLeft: 8, flex: 1, color: isDarkMode ? colors.foreground : '#111' }}
             />
           </View>
           
@@ -310,10 +312,10 @@ export default function Discover() {
                   paddingHorizontal: 14,
                   paddingVertical: 8,
                   borderRadius: 999,
-                  backgroundColor: selectedRadius === radius ? '#007AFF' : 'rgba(0,0,0,0.06)'
+                  backgroundColor: selectedRadius === radius ? colors.primary : (isDarkMode ? colors.input : 'rgba(0,0,0,0.06)')
                 }}
               >
-                <Text style={{ color: selectedRadius === radius ? '#fff' : '#111', fontWeight: '600' }}>{radius}</Text>
+                <Text style={{ color: selectedRadius === radius ? '#fff' : (isDarkMode ? colors.foreground : '#111'), fontWeight: '600' }}>{radius}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -325,18 +327,18 @@ export default function Discover() {
         <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
           {loading ? (
             <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-              <Text style={{ color: '#666', fontSize: 16 }}>Chargement des événements...</Text>
+              <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 16 }}>Chargement des événements...</Text>
             </View>
           ) : events.length === 0 ? (
             <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-              <Ionicons name="location-outline" size={64} color="#999" />
-              <Text style={{ fontSize: 18, fontWeight: '600', color: '#111', marginTop: 12, marginBottom: 8 }}>
+              <Ionicons name="location-outline" size={64} color={isDarkMode ? colors.mutedForeground : '#999'} />
+              <Text style={{ fontSize: 18, fontWeight: '600', color: isDarkMode ? colors.foreground : '#111', marginTop: 12, marginBottom: 8 }}>
                 Aucun événement à proximité
               </Text>
-              <Text style={{ textAlign: 'center', color: '#666', marginBottom: 16 }}>
+              <Text style={{ textAlign: 'center', color: isDarkMode ? colors.mutedForeground : '#666', marginBottom: 16 }}>
                 Essayez d'augmenter le rayon de recherche
               </Text>
-              <TouchableOpacity onPress={() => router.push('/create-event')} style={{ paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, backgroundColor: '#007AFF' }}>
+              <TouchableOpacity onPress={() => router.push('/create-event')} style={{ paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, backgroundColor: colors.primary }}>
                 <Text style={{ color: '#fff', fontWeight: '700' }}>Créer un événement</Text>
               </TouchableOpacity>
             </View>
@@ -344,26 +346,26 @@ export default function Discover() {
             <View style={{ gap: 16, paddingBottom: 16 }}>
               {events.map((event) => (
                 <TouchableOpacity key={event.id} onPress={() => setSelectedEvent(event)}>
-                  <View style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 16 }}>
+                  <View style={{ backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)', padding: 16 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                       <View style={{ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginRight: 16, backgroundColor: event.color }}>
                         <Text style={{ fontSize: 24 }}>{event.icon}</Text>
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontWeight: '700', fontSize: 18, marginBottom: 4, color: '#111' }}>{event.title}</Text>
-                        <Text style={{ fontSize: 14, marginBottom: 4, color: '#666' }}>{event.location}</Text>
+                        <Text style={{ fontWeight: '700', fontSize: 18, marginBottom: 4, color: isDarkMode ? colors.foreground : '#111' }}>{event.title}</Text>
+                        <Text style={{ fontSize: 14, marginBottom: 4, color: isDarkMode ? colors.mutedForeground : '#666' }}>{event.location}</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="time" size={14} color="#007AFF" />
-                            <Text style={{ fontSize: 12, marginLeft: 4, color: '#666' }}>{event.time}</Text>
+                            <Ionicons name="time" size={14} color={colors.primary} />
+                            <Text style={{ fontSize: 12, marginLeft: 4, color: isDarkMode ? colors.mutedForeground : '#666' }}>{event.time}</Text>
                           </View>
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="people" size={14} color="#007AFF" />
-                            <Text style={{ fontSize: 12, marginLeft: 4, color: '#666' }}>{event.participants}</Text>
+                            <Ionicons name="people" size={14} color={colors.primary} />
+                            <Text style={{ fontSize: 12, marginLeft: 4, color: isDarkMode ? colors.mutedForeground : '#666' }}>{event.participants}</Text>
                           </View>
                           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Ionicons name="location" size={14} color="#007AFF" />
-                            <Text style={{ fontSize: 12, marginLeft: 4, color: '#666' }}>{event.distance}</Text>
+                            <Ionicons name="location" size={14} color={colors.primary} />
+                            <Text style={{ fontSize: 12, marginLeft: 4, color: isDarkMode ? colors.mutedForeground : '#666' }}>{event.distance}</Text>
                           </View>
                         </View>
                       </View>

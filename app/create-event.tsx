@@ -4,9 +4,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Image, ImageBackground, Modal, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageBackground, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from "../lib/context/AuthContext";
+import { useTheme } from '../lib/context/ThemeContext';
 import { PublicEquipment } from '../lib/services/equipments';
 import { EventService } from "../lib/services/events";
 import { GeocodingService } from "../lib/services/geocoding";
@@ -36,6 +37,7 @@ export default function CreateEvent() {
   const [searchRadius, setSearchRadius] = useState(50);
 
   const { user } = useAuth();
+  const { isDarkMode, colors } = useTheme();
   const router = useRouter();
 
   const sportTypes = [
@@ -271,28 +273,28 @@ export default function CreateEvent() {
       style={{ flex: 1 }}
       blurRadius={30}
     >
-      <LinearGradient colors={['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']} style={{ flex: 1 }}>
+      <LinearGradient colors={isDarkMode ? ['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)'] : ['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']} style={{ flex: 1 }}>
         <SafeAreaView style={{ flex: 1 }}>
-          <StatusBar barStyle="dark-content" />
+          {/* StatusBar géré globalement */}
           
           {/* Header simple */}
           <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.05)' }}>
-              <Ionicons name="arrow-back" size={22} color="#111" />
+            <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, borderRadius: 999, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+              <Ionicons name="arrow-back" size={22} color={isDarkMode ? colors.foreground : '#111'} />
             </TouchableOpacity>
-            <Text style={{ fontSize: 20, fontWeight: '700', color: '#111' }}>Créer un événement</Text>
+            <Text style={{ fontSize: 20, fontWeight: '700', color: isDarkMode ? colors.foreground : '#111' }}>Créer un événement</Text>
             <View style={{ width: 38 }} />
           </View>
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
-            <View style={{ backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', padding: 24, marginBottom: 24 }}>
-              <Text style={{ fontSize: 24, fontWeight: '700', marginBottom: 24, color: '#111' }}>
+            <View style={{ backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)', padding: 24, marginBottom: 24 }}>
+              <Text style={{ fontSize: 24, fontWeight: '700', marginBottom: 24, color: isDarkMode ? colors.foreground : '#111' }}>
                 Nouvel événement
               </Text>
 
               {/* Image Upload */}
               <View style={{ marginBottom: 24 }}>
-                <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12, color: '#111' }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', marginBottom: 12, color: isDarkMode ? colors.foreground : '#111' }}>
                   Image de l'événement
                 </Text>
                 <TouchableOpacity
@@ -303,14 +305,14 @@ export default function CreateEvent() {
                       { text: 'Choisir depuis la galerie', onPress: pickImage }
                     ]);
                   }}
-                  style={{ width: '100%', height: 128, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(0,0,0,0.2)' }}
+                  style={{ width: '100%', height: 128, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderStyle: 'dashed', borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.2)' }}
                 >
                   {eventImage ? (
                     <Image source={{ uri: eventImage }} style={{ width: '100%', height: '100%', borderRadius: 16 }} />
                   ) : (
                     <View style={{ alignItems: 'center' }}>
-                      <Ionicons name="camera" size={32} color="#666" />
-                      <Text style={{ marginTop: 8, color: '#666' }}>
+                      <Ionicons name="camera" size={32} color={isDarkMode ? colors.mutedForeground : '#666'} />
+                      <Text style={{ marginTop: 8, color: isDarkMode ? colors.mutedForeground : '#666' }}>
                         Ajouter une image
                       </Text>
                     </View>
@@ -321,38 +323,38 @@ export default function CreateEvent() {
               {/* Basic Info */}
               <View style={{ gap: 16 }}>
                 <View>
-                  <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Titre de l'événement *</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
-                    <Ionicons name="create-outline" size={18} color="#666" />
+                  <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: isDarkMode ? colors.foreground : '#111' }}>Titre de l'événement *</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                    <Ionicons name="create-outline" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} />
                     <TextInput
                       placeholder="Ex: Match amical de football"
-                      placeholderTextColor="#888"
+                      placeholderTextColor={isDarkMode ? colors.mutedForeground : '#888'}
                       value={title}
                       onChangeText={setTitle}
-                      style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                      style={{ marginLeft: 8, flex: 1, color: isDarkMode ? colors.foreground : '#111' }}
                     />
                   </View>
                 </View>
 
                 <View>
-                  <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Description</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
-                    <Ionicons name="document-text-outline" size={18} color="#666" style={{ marginTop: 2 }} />
+                  <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: isDarkMode ? colors.foreground : '#111' }}>Description</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                    <Ionicons name="document-text-outline" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} style={{ marginTop: 2 }} />
                     <TextInput
                       placeholder="Décrivez votre événement..."
-                      placeholderTextColor="#888"
+                      placeholderTextColor={isDarkMode ? colors.mutedForeground : '#888'}
                       value={description}
                       onChangeText={setDescription}
                       multiline
                       numberOfLines={3}
-                      style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                      style={{ marginLeft: 8, flex: 1, color: isDarkMode ? colors.foreground : '#111' }}
                     />
                   </View>
                 </View>
 
                 {/* Sport Type Selection */}
                 <View>
-                  <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12, color: '#111' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12, color: isDarkMode ? colors.foreground : '#111' }}>
                     Type de sport *
                   </Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -363,12 +365,12 @@ export default function CreateEvent() {
                           onPress={() => setSportType(sport)}
                           style={{ 
                             flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 999, borderWidth: 2,
-                            backgroundColor: sportType === sport ? 'rgba(0,122,255,0.2)' : 'transparent',
-                            borderColor: sportType === sport ? '#007AFF' : 'rgba(0,0,0,0.2)'
+                            backgroundColor: sportType === sport ? (isDarkMode ? 'rgba(0,122,255,0.3)' : 'rgba(0,122,255,0.2)') : 'transparent',
+                            borderColor: sportType === sport ? colors.primary : (isDarkMode ? colors.border : 'rgba(0,0,0,0.2)')
                           }}
                         >
                           <Text style={{ fontSize: 18, marginRight: 8 }}>{getSportIcon(sport)}</Text>
-                          <Text style={{ fontWeight: '500', color: sportType === sport ? '#007AFF' : '#111' }}>
+                          <Text style={{ fontWeight: '500', color: sportType === sport ? colors.primary : (isDarkMode ? colors.foreground : '#111') }}>
                             {sport}
                           </Text>
                         </TouchableOpacity>
@@ -380,25 +382,25 @@ export default function CreateEvent() {
                 {/* Date and Time */}
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   <TouchableOpacity onPress={() => setShowDatePicker(true)} style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Date *</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
-                      <Ionicons name="calendar-outline" size={18} color="#666" />
-                      <Text style={{ marginLeft: 8, flex: 1, color: '#111' }}>{date.toLocaleDateString('fr-FR')}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: isDarkMode ? colors.foreground : '#111' }}>Date *</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="calendar-outline" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} />
+                      <Text style={{ marginLeft: 8, flex: 1, color: isDarkMode ? colors.foreground : '#111' }}>{date.toLocaleDateString('fr-FR')}</Text>
                     </View>
                   </TouchableOpacity>
                   
                   <TouchableOpacity onPress={() => setShowTimePicker(true)} style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Heure *</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
-                      <Ionicons name="time-outline" size={18} color="#666" />
-                      <Text style={{ marginLeft: 8, flex: 1, color: '#111' }}>{time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: isDarkMode ? colors.foreground : '#111' }}>Heure *</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="time-outline" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} />
+                      <Text style={{ marginLeft: 8, flex: 1, color: isDarkMode ? colors.foreground : '#111' }}>{time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
                     </View>
                   </TouchableOpacity>
                 </View>
 
                 {/* Location */}
                 <View>
-                  <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12, color: '#111' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '500', marginBottom: 12, color: isDarkMode ? colors.foreground : '#111' }}>
                     Localisation *
                   </Text>
                   
@@ -407,42 +409,42 @@ export default function CreateEvent() {
                       onPress={() => setUsePublicTerrain(false)}
                       style={{ 
                         paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-                        backgroundColor: !usePublicTerrain ? '#007AFF' : 'rgba(0,0,0,0.06)'
+                        backgroundColor: !usePublicTerrain ? colors.primary : (isDarkMode ? colors.input : 'rgba(0,0,0,0.06)')
                       }}
                     >
-                      <Text style={{ color: !usePublicTerrain ? '#fff' : '#111', fontWeight: '600' }}>Adresse libre</Text>
+                      <Text style={{ color: !usePublicTerrain ? '#fff' : (isDarkMode ? colors.foreground : '#111'), fontWeight: '600' }}>Adresse libre</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => setUsePublicTerrain(true)}
                       style={{ 
                         paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999,
-                        backgroundColor: usePublicTerrain ? '#007AFF' : 'rgba(0,0,0,0.06)'
+                        backgroundColor: usePublicTerrain ? colors.primary : (isDarkMode ? colors.input : 'rgba(0,0,0,0.06)')
                       }}
                     >
-                      <Text style={{ color: usePublicTerrain ? '#fff' : '#111', fontWeight: '600' }}>Terrain public</Text>
+                      <Text style={{ color: usePublicTerrain ? '#fff' : (isDarkMode ? colors.foreground : '#111'), fontWeight: '600' }}>Terrain public</Text>
                     </TouchableOpacity>
                   </View>
 
                   {!usePublicTerrain ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
-                      <Ionicons name="location-outline" size={18} color="#666" />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="location-outline" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} />
                       <TextInput
                         placeholder="Adresse de l'événement"
-                        placeholderTextColor="#888"
+                        placeholderTextColor={isDarkMode ? colors.mutedForeground : '#888'}
                         value={location}
                         onChangeText={setLocation}
-                        style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                        style={{ marginLeft: 8, flex: 1, color: isDarkMode ? colors.foreground : '#111' }}
                       />
                     </View>
                   ) : (
                     <TouchableOpacity
                       onPress={() => setShowTerrainModal(true)}
                       style={{ 
-                        flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 14
+                        flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 14
                       }}
                     >
-                      <Ionicons name="search-outline" size={18} color="#666" />
-                      <Text style={{ marginLeft: 8, flex: 1, color: selectedTerrain ? '#111' : '#888' }}>
+                      <Ionicons name="search-outline" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} />
+                      <Text style={{ marginLeft: 8, flex: 1, color: selectedTerrain ? (isDarkMode ? colors.foreground : '#111') : (isDarkMode ? colors.mutedForeground : '#888') }}>
                         {selectedTerrain ? selectedTerrain.name : 'Choisir un terrain'}
                       </Text>
                     </TouchableOpacity>
@@ -452,31 +454,31 @@ export default function CreateEvent() {
                 {/* Participants and Price */}
                 <View style={{ flexDirection: 'row', gap: 12 }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Participants max *</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
-                      <Ionicons name="people-outline" size={18} color="#666" />
+                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: isDarkMode ? colors.foreground : '#111' }}>Participants max *</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="people-outline" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} />
                       <TextInput
                         placeholder="10"
-                        placeholderTextColor="#888"
+                        placeholderTextColor={isDarkMode ? colors.mutedForeground : '#888'}
                         value={maxParticipants}
                         onChangeText={setMaxParticipants}
                         keyboardType="numeric"
-                        style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                        style={{ marginLeft: 8, flex: 1, color: isDarkMode ? colors.foreground : '#111' }}
                       />
                     </View>
                   </View>
                   
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: '#111' }}>Prix (€)</Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
-                      <Ionicons name="card-outline" size={18} color="#666" />
+                    <Text style={{ fontSize: 14, fontWeight: '600', marginBottom: 8, color: isDarkMode ? colors.foreground : '#111' }}>Prix (€)</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? colors.input : 'rgba(0,0,0,0.04)', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10 }}>
+                      <Ionicons name="card-outline" size={18} color={isDarkMode ? colors.mutedForeground : '#666'} />
                       <TextInput
                         placeholder="0"
-                        placeholderTextColor="#888"
+                        placeholderTextColor={isDarkMode ? colors.mutedForeground : '#888'}
                         value={price}
                         onChangeText={setPrice}
                         keyboardType="numeric"
-                        style={{ marginLeft: 8, flex: 1, color: '#111' }}
+                        style={{ marginLeft: 8, flex: 1, color: isDarkMode ? colors.foreground : '#111' }}
                       />
                     </View>
                   </View>
@@ -490,7 +492,7 @@ export default function CreateEvent() {
                   disabled={loading}
                   style={{ 
                     paddingVertical: 16, borderRadius: 16, alignItems: 'center',
-                    backgroundColor: '#007AFF',
+                    backgroundColor: colors.primary,
                     opacity: loading ? 0.5 : 1
                   }}
                 >

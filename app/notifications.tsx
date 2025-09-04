@@ -11,11 +11,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
+import { useTheme } from '../lib/context/ThemeContext';
 import { Notification, NotificationService } from '../lib/services/notifications';
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { isDarkMode, colors } = useTheme();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -104,7 +106,7 @@ export default function NotificationsScreen() {
   const getNotificationColor = (type: string) => {
     switch (type) {
       case 'event_created':
-        return '#3b82f6'; // blue
+        return colors.primary; // blue
       case 'message_received':
         return '#10b981'; // green
       case 'event_reminder':
@@ -112,7 +114,7 @@ export default function NotificationsScreen() {
       case 'participant_joined':
         return '#8b5cf6'; // purple
       default:
-        return '#6b7280'; // gray
+        return isDarkMode ? colors.mutedForeground : '#6b7280'; // gray
     }
   };
 
@@ -129,14 +131,28 @@ export default function NotificationsScreen() {
 
   const renderNotification = ({ item }: { item: Notification }) => (
     <TouchableOpacity
-      className="bg-slate-800 mx-4 mb-3 rounded-lg p-4 border-l-4"
-      style={{ borderLeftColor: getNotificationColor(item.notification_type) }}
+      style={{
+        backgroundColor: isDarkMode ? colors.card : '#1e293b',
+        marginHorizontal: 16,
+        marginBottom: 12,
+        borderRadius: 12,
+        padding: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: getNotificationColor(item.notification_type)
+      }}
       onPress={() => handleNotificationPress(item)}
     >
-      <View className="flex-row items-start">
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
         <View 
-          className="w-10 h-10 rounded-full items-center justify-center mr-3"
-          style={{ backgroundColor: getNotificationColor(item.notification_type) + '20' }}
+          style={{
+            width: 40,
+            height: 40,
+            borderRadius: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 12,
+            backgroundColor: getNotificationColor(item.notification_type) + '20'
+          }}
         >
           <Ionicons 
             name={getNotificationIcon(item.notification_type) as any} 
@@ -145,37 +161,45 @@ export default function NotificationsScreen() {
           />
         </View>
         
-        <View className="flex-1">
-          <Text className="text-white font-semibold text-base mb-1">
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: isDarkMode ? colors.foreground : '#FFFFFF', fontWeight: '600', fontSize: 16, marginBottom: 4 }}>
             {item.title}
           </Text>
-          <Text className="text-slate-300 text-sm mb-2">
+          <Text style={{ color: isDarkMode ? colors.mutedForeground : '#CBD5E1', fontSize: 14, marginBottom: 8 }}>
             {item.body}
           </Text>
-          <Text className="text-slate-500 text-xs">
+          <Text style={{ color: isDarkMode ? colors.mutedForeground : '#94A3B8', fontSize: 12 }}>
             {formatTime(item.sent_at)}
           </Text>
         </View>
         
         <TouchableOpacity
           onPress={() => markAsRead(item.id)}
-          className="ml-2"
+          style={{ marginLeft: 8 }}
         >
-          <Ionicons name="close" size={20} color="#6b7280" />
+          <Ionicons name="close" size={20} color={isDarkMode ? colors.mutedForeground : '#6b7280'} />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
   );
 
   const renderEmptyState = () => (
-    <View className="flex-1 items-center justify-center px-8">
-      <View className="w-20 h-20 bg-slate-700 rounded-full items-center justify-center mb-4">
-        <Ionicons name="notifications-off" size={40} color="#9ca3af" />
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+      <View style={{
+        width: 80,
+        height: 80,
+        backgroundColor: isDarkMode ? colors.input : '#374151',
+        borderRadius: 40,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 16
+      }}>
+        <Ionicons name="notifications-off" size={40} color={isDarkMode ? colors.mutedForeground : '#9ca3af'} />
       </View>
-      <Text className="text-white text-xl font-semibold mb-2 text-center">
+      <Text style={{ color: isDarkMode ? colors.foreground : '#FFFFFF', fontSize: 20, fontWeight: '600', marginBottom: 8, textAlign: 'center' }}>
         Aucune notification
       </Text>
-      <Text className="text-slate-400 text-center">
+      <Text style={{ color: isDarkMode ? colors.mutedForeground : '#94A3B8', textAlign: 'center' }}>
         Vous n'avez pas de nouvelles notifications pour le moment.
       </Text>
     </View>
@@ -183,17 +207,17 @@ export default function NotificationsScreen() {
 
   if (!user) {
     return (
-      <SafeAreaView className="flex-1 bg-slate-900" edges={['top', 'bottom', 'left', 'right']}>
-        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
-        <View className="flex-1 items-center justify-center px-8">
-          <Text className="text-white text-xl font-semibold mb-4">
+      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom', 'left', 'right']}>
+        <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={isDarkMode ? "#0f172a" : "#FFFFFF"} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+          <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 20, fontWeight: '600', marginBottom: 16, textAlign: 'center' }}>
             Connectez-vous pour voir vos notifications
           </Text>
           <TouchableOpacity
             onPress={() => router.push('/auth/login')}
-            className="bg-blue-500 px-6 py-3 rounded-lg"
+            style={{ backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
           >
-            <Text className="text-white font-semibold">Se connecter</Text>
+            <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Se connecter</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -201,27 +225,36 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-900" edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={isDarkMode ? "#0f172a" : "#FFFFFF"} />
       
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-4 bg-slate-800 border-b border-slate-700">
-        <View className="flex-row items-center">
+      <View style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+        backgroundColor: isDarkMode ? colors.card : '#1e293b',
+        borderBottomWidth: 1,
+        borderBottomColor: isDarkMode ? colors.border : '#334155'
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity
             onPress={() => router.back()}
-            className="mr-4"
+            style={{ marginRight: 16 }}
           >
-            <Ionicons name="arrow-back" size={24} color="white" />
+            <Ionicons name="arrow-back" size={24} color={isDarkMode ? colors.foreground : '#FFFFFF'} />
           </TouchableOpacity>
-          <Text className="text-white text-xl font-bold">Notifications</Text>
+          <Text style={{ color: isDarkMode ? colors.foreground : '#FFFFFF', fontSize: 20, fontWeight: 'bold' }}>Notifications</Text>
         </View>
         
         {notifications.length > 0 && (
           <TouchableOpacity
             onPress={markAllAsRead}
-            className="bg-slate-700 px-3 py-1 rounded-lg"
+            style={{ backgroundColor: isDarkMode ? colors.input : '#374151', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 }}
           >
-            <Text className="text-slate-300 text-sm">Tout marquer comme lu</Text>
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#CBD5E1', fontSize: 14 }}>Tout marquer comme lu</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -240,8 +273,8 @@ export default function NotificationsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#3b82f6"
-            colors={['#3b82f6']}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
           />
         }
         ListEmptyComponent={renderEmptyState}

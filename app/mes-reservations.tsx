@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
+import { useTheme } from '../lib/context/ThemeContext';
 import { ReservationService, ReservationWithEquipment } from '../lib/services/reservations';
 
 interface ReservationItemProps {
@@ -21,12 +22,14 @@ interface ReservationItemProps {
 }
 
 const ReservationItem: React.FC<ReservationItemProps> = ({ reservation, onPress }) => {
+  const { isDarkMode, colors } = useTheme();
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return '#10b981';
       case 'rejected': return '#ef4444';
       case 'cancelled': return '#f59e0b';
-      default: return '#3b82f6';
+      default: return colors.primary;
     }
   };
 
@@ -51,11 +54,11 @@ const ReservationItem: React.FC<ReservationItemProps> = ({ reservation, onPress 
   };
 
   return (
-    <TouchableOpacity style={styles.reservationCard} onPress={onPress}>
+    <TouchableOpacity style={[styles.reservationCard, { backgroundColor: isDarkMode ? colors.card : '#1e293b', borderColor: isDarkMode ? colors.border : '#334155' }]} onPress={onPress}>
       <View style={styles.reservationHeader}>
         <View style={styles.reservationInfo}>
-          <Text style={styles.equipmentName}>{reservation.equipment.name}</Text>
-          <Text style={styles.sportType}>{reservation.sport_type}</Text>
+          <Text style={[styles.equipmentName, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}>{reservation.equipment.name}</Text>
+          <Text style={[styles.sportType, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>{reservation.sport_type}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(reservation.status) }]}>
           <Ionicons name={getStatusIcon(reservation.status) as any} size={16} color="#ffffff" />
@@ -65,35 +68,35 @@ const ReservationItem: React.FC<ReservationItemProps> = ({ reservation, onPress 
 
       <View style={styles.reservationDetails}>
         <View style={styles.detailRow}>
-          <Ionicons name="calendar" size={16} color="#64748b" />
-          <Text style={styles.detailText}>
+          <Ionicons name="calendar" size={16} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+          <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>
             {formatDate(reservation.start_time)} - {formatDate(reservation.end_time)}
           </Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Ionicons name="people" size={16} color="#64748b" />
-          <Text style={styles.detailText}>
+          <Ionicons name="people" size={16} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+          <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>
             {reservation.max_participants} participants max
           </Text>
         </View>
 
         <View style={styles.detailRow}>
-          <Ionicons name="location" size={16} color="#64748b" />
-          <Text style={styles.detailText}>
+          <Ionicons name="location" size={16} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+          <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>
             {reservation.equipment.address}, {reservation.equipment.city}
           </Text>
         </View>
 
         {reservation.description && (
           <View style={styles.detailRow}>
-            <Ionicons name="document-text" size={16} color="#64748b" />
-            <Text style={styles.detailText}>{reservation.description}</Text>
+            <Ionicons name="document-text" size={16} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+            <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>{reservation.description}</Text>
           </View>
         )}
 
         {reservation.rejection_reason && (
-          <View style={styles.rejectionReason}>
+          <View style={[styles.rejectionReason, { backgroundColor: isDarkMode ? colors.input : '#1e1e1e' }]}>
             <Ionicons name="alert-circle" size={16} color="#ef4444" />
             <Text style={styles.rejectionText}>{reservation.rejection_reason}</Text>
           </View>
@@ -106,6 +109,7 @@ const ReservationItem: React.FC<ReservationItemProps> = ({ reservation, onPress 
 export default function MesReservationsScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { isDarkMode, colors } = useTheme();
   const [reservations, setReservations] = useState<ReservationWithEquipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -173,45 +177,45 @@ export default function MesReservationsScreen() {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={{ flex: 1 }}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <Text style={styles.loadingText}>Chargement de vos réservations...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Chargement de vos réservations...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={{ flex: 1 }}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: isDarkMode ? colors.border : '#1e293b' }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#f8fafc" />
+          <Ionicons name="arrow-back" size={24} color={isDarkMode ? colors.foreground : '#f8fafc'} />
         </TouchableOpacity>
-        <Text style={styles.title}>Mes Réservations</Text>
+        <Text style={[styles.title, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}>Mes Réservations</Text>
         <TouchableOpacity style={styles.syncButton} onPress={handleRefresh}>
-          <Ionicons name="refresh" size={24} color="#3b82f6" />
+          <Ionicons name="refresh" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Statistiques */}
       <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statNumber}>{stats.total}</Text>
-          <Text style={styles.statLabel}>Total</Text>
+        <View style={[styles.statCard, { backgroundColor: isDarkMode ? colors.card : '#1e293b' }]}>
+          <Text style={[styles.statNumber, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}>{stats.total}</Text>
+          <Text style={[styles.statLabel, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Total</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={[styles.statNumber, { color: '#3b82f6' }]}>{stats.pending}</Text>
-          <Text style={styles.statLabel}>En attente</Text>
+        <View style={[styles.statCard, { backgroundColor: isDarkMode ? colors.card : '#1e293b' }]}>
+          <Text style={[styles.statNumber, { color: colors.primary }]}>{stats.pending}</Text>
+          <Text style={[styles.statLabel, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>En attente</Text>
         </View>
-        <View style={styles.statCard}>
+        <View style={[styles.statCard, { backgroundColor: isDarkMode ? colors.card : '#1e293b' }]}>
           <Text style={[styles.statNumber, { color: '#10b981' }]}>{stats.approved}</Text>
-          <Text style={styles.statLabel}>Approuvées</Text>
+          <Text style={[styles.statLabel, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Approuvées</Text>
         </View>
-        <View style={styles.statCard}>
+        <View style={[styles.statCard, { backgroundColor: isDarkMode ? colors.card : '#1e293b' }]}>
           <Text style={[styles.statNumber, { color: '#ef4444' }]}>{stats.rejected}</Text>
-          <Text style={styles.statLabel}>Rejetées</Text>
+          <Text style={[styles.statLabel, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Rejetées</Text>
         </View>
       </View>
 
@@ -231,13 +235,13 @@ export default function MesReservationsScreen() {
         }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={64} color="#64748b" />
-            <Text style={styles.emptyText}>Aucune réservation</Text>
-            <Text style={styles.emptySubtext}>
+            <Ionicons name="calendar-outline" size={64} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
+            <Text style={[styles.emptyText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Aucune réservation</Text>
+            <Text style={[styles.emptySubtext, { color: isDarkMode ? colors.mutedForeground : '#475569' }]}>
               Vous n'avez pas encore de réservations de terrains publics
             </Text>
             <TouchableOpacity
-              style={styles.createButton}
+              style={[styles.createButton, { backgroundColor: colors.primary }]}
               onPress={() => router.push('/create-event')}
             >
               <Ionicons name="add" size={20} color="#ffffff" />
@@ -251,10 +255,6 @@ export default function MesReservationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f172a',
-  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -262,7 +262,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#1e293b',
   },
   backButton: {
     padding: 8,
@@ -270,7 +269,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#f8fafc',
   },
   syncButton: {
     padding: 8,
@@ -282,7 +280,6 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#1e293b',
     borderRadius: 8,
     padding: 12,
     marginHorizontal: 4,
@@ -291,11 +288,9 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#f8fafc',
   },
   statLabel: {
     fontSize: 12,
-    color: '#64748b',
     marginTop: 4,
   },
   listContainer: {
@@ -303,12 +298,10 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   reservationCard: {
-    backgroundColor: '#1e293b',
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#334155',
   },
   reservationHeader: {
     flexDirection: 'row',
@@ -322,11 +315,9 @@ const styles = StyleSheet.create({
   equipmentName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#f8fafc',
   },
   sportType: {
     fontSize: 14,
-    color: '#64748b',
     marginTop: 2,
   },
   statusBadge: {
@@ -352,14 +343,12 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
-    color: '#64748b',
     marginLeft: 8,
     flex: 1,
   },
   rejectionReason: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1e1e1e',
     padding: 8,
     borderRadius: 6,
     marginTop: 8,
@@ -378,7 +367,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#64748b',
   },
   emptyContainer: {
     flex: 1,
@@ -389,12 +377,10 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#64748b',
     marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#475569',
     textAlign: 'center',
     marginTop: 8,
     paddingHorizontal: 40,
@@ -402,7 +388,6 @@ const styles = StyleSheet.create({
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#3b82f6',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 8,

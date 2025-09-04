@@ -1,21 +1,27 @@
 import { useFonts } from 'expo-font';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Text } from 'react-native';
 import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import "../app/global.css";
 import BottomNav from '../components/BottomNav';
 import { AuthProvider, useAuth } from '../lib/context/AuthContext';
-import { ThemeProvider } from '../lib/context/ThemeContext';
+import { ThemeProvider, useTheme } from '../lib/context/ThemeContext';
 
 function LoadingScreen() {
+  const { isDarkMode, colors } = useTheme();
+  
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0f172a' }}>
-      <ActivityIndicator size="large" color="#3b82f6" />
-      <Text style={{ marginTop: 16, fontSize: 16, color: '#fff' }}>Chargement...</Text>
-    </View>
+    <LinearGradient
+      colors={isDarkMode ? ['#0f172a', '#1e293b'] : ['#ffffff', '#f0f9ff']}
+      style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+    >
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text style={{ marginTop: 16, fontSize: 16, color: isDarkMode ? colors.foreground : '#111' }}>Chargement...</Text>
+    </LinearGradient>
   );
 }
 
@@ -87,23 +93,48 @@ function RootLayoutNav() {
   );
 }
 
+function ThemedLayout() {
+  const { isDarkMode, colors } = useTheme();
+  const segments = useSegments();
+  
+  // Déterminer si on doit afficher la BottomNav
+  const firstSegment = segments[0];
+  const shouldShowBottomNav = firstSegment !== 'auth' && firstSegment !== 'welcome';
+
+  return (
+    <LinearGradient
+      colors={isDarkMode ? ['#0f172a', '#1e293b'] : ['#ffffff', '#f0f9ff']}
+      style={{ flex: 1 }}
+    >
+      <RootLayoutNav />
+      {shouldShowBottomNav && <BottomNav />}
+      <StatusBar style={isDarkMode ? "light" : "dark"} backgroundColor={isDarkMode ? "#0f172a" : "#ffffff"} />
+    </LinearGradient>
+  );
+}
+
 export default function RootLayout() {
   // Supprimer la dépendance à la police manquante
   const [loaded] = useFonts({});
 
   if (!loaded) {
-    return <LoadingScreen />;
+    return (
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <LoadingScreen />
+        </ThemeProvider>
+      </SafeAreaProvider>
+    );
   }
 
   return (
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <RootLayoutNav />
-          <BottomNav />
-          <StatusBar style="light" />
+          <ThemedLayout />
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
 }
+

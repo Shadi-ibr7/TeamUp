@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Alert, Image, ImageBackground, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
+import { useTheme } from '../lib/context/ThemeContext';
 import { EventService } from '../lib/services/events';
 import { NotificationService } from '../lib/services/notifications';
 
@@ -32,6 +33,7 @@ export default function Index() {
   const [isConnected, setIsConnected] = useState(false);
 
   const { user, signOut } = useAuth();
+  const { isDarkMode, toggleTheme, colors } = useTheme();
   const router = useRouter();
 
   // Test de connexion Supabase
@@ -237,7 +239,7 @@ export default function Index() {
       style={{ width: isCompact ? 160 : 200, marginRight: 16 }}
       onPress={() => router.push(`/events/${event.id}`)}
     >
-      <View style={{ borderRadius: 16, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.6)', borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' }}>
+      <View style={{ borderRadius: 16, overflow: 'hidden', backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.6)', borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)' }}>
         {/* Image */}
         <View style={{ height: isCompact ? 100 : 120, position: 'relative' }}>
           {event.image_url ? (
@@ -263,20 +265,20 @@ export default function Index() {
         {/* Infos */}
         <View style={{ padding: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-            <Ionicons name="calendar" size={14} color="#007AFF" />
-            <Text style={{ color: '#111', fontSize: 12, marginLeft: 8 }} numberOfLines={1}>
+            <Ionicons name="calendar" size={14} color={colors.primary} />
+            <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 12, marginLeft: 8 }} numberOfLines={1}>
               {formatEventDate(event.date, event.time)}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-            <Ionicons name="location" size={14} color="#007AFF" />
-            <Text style={{ color: '#666', fontSize: 12, marginLeft: 8, flex: 1 }} numberOfLines={1}>
+            <Ionicons name="location" size={14} color={colors.primary} />
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 12, marginLeft: 8, flex: 1 }} numberOfLines={1}>
               {event.location}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="people" size={14} color="#007AFF" />
-            <Text style={{ color: '#666', fontSize: 12, marginLeft: 8 }}>
+            <Ionicons name="people" size={14} color={colors.primary} />
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 12, marginLeft: 8 }}>
               {event.current_participants || 0}/{event.max_participants}
             </Text>
           </View>
@@ -324,27 +326,32 @@ export default function Index() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F2F2F7' }}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* StatusBar géré globalement */}
 
       {/* Header simplifié */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ fontSize: 20, fontWeight: '700', color: '#111' }}>TeamUp</Text>
-        <TouchableOpacity onPress={handleSignOut} style={{ padding: 8, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.05)' }}>
-          <Ionicons name="log-out-outline" size={22} color="#111" />
-        </TouchableOpacity>
+        <Text style={{ fontSize: 20, fontWeight: '700', color: isDarkMode ? '#FFFFFF' : '#111' }}>TeamUp</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={toggleTheme} style={{ padding: 8, borderRadius: 999, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', marginRight: 8 }}>
+            <Ionicons name={isDarkMode ? "sunny" : "moon"} size={22} color={isDarkMode ? '#FFFFFF' : '#111'} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleSignOut} style={{ padding: 8, borderRadius: 999, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
+            <Ionicons name="log-out-outline" size={22} color={isDarkMode ? '#FFFFFF' : '#111'} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Barre de recherche */}
       <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10 }}>
-          <Ionicons name="search" size={18} color="#666" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10 }}>
+          <Ionicons name="search" size={18} color={isDarkMode ? '#FFFFFF' : '#666'} />
           <TextInput
             placeholder="Rechercher des événements..."
-            placeholderTextColor="#888"
+            placeholderTextColor={isDarkMode ? '#CCCCCC' : '#888'}
             value={searchText}
             onChangeText={setSearchText}
-            style={{ marginLeft: 8, flex: 1, color: '#111' }}
+            style={{ marginLeft: 8, flex: 1, color: isDarkMode ? '#FFFFFF' : '#111' }}
           />
         </View>
       </View>
@@ -361,10 +368,10 @@ export default function Index() {
                 paddingHorizontal: 14,
                 paddingVertical: 8,
                 borderRadius: 999,
-                backgroundColor: selectedFilter === filter ? '#007AFF' : 'rgba(0,0,0,0.06)'
+                backgroundColor: selectedFilter === filter ? colors.primary : (isDarkMode ? colors.input : 'rgba(0,0,0,0.06)')
               }}
             >
-              <Text style={{ color: selectedFilter === filter ? '#fff' : '#111', fontWeight: '600' }}>{filter}</Text>
+              <Text style={{ color: selectedFilter === filter ? '#fff' : (isDarkMode ? colors.foreground : '#111'), fontWeight: '600' }}>{filter}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -374,18 +381,18 @@ export default function Index() {
       <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
         {loading ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-            <Text style={{ color: '#666', fontSize: 16 }}>Chargement des événements...</Text>
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 16 }}>Chargement des événements...</Text>
           </View>
         ) : eventCategories.length === 0 ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-            <Ionicons name="calendar-outline" size={64} color="#999" />
-            <Text style={{ fontSize: 18, fontWeight: '600', color: '#111', marginTop: 12, marginBottom: 8 }}>
+            <Ionicons name="calendar-outline" size={64} color={isDarkMode ? colors.mutedForeground : '#999'} />
+            <Text style={{ fontSize: 18, fontWeight: '600', color: isDarkMode ? colors.foreground : '#111', marginTop: 12, marginBottom: 8 }}>
               Aucun événement trouvé
             </Text>
-            <Text style={{ textAlign: 'center', color: '#666', marginBottom: 16 }}>
+            <Text style={{ textAlign: 'center', color: isDarkMode ? colors.mutedForeground : '#666', marginBottom: 16 }}>
               Créez votre premier événement pour commencer
             </Text>
-            <TouchableOpacity onPress={() => router.push('/create-event')} style={{ paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, backgroundColor: '#007AFF' }}>
+            <TouchableOpacity onPress={() => router.push('/create-event')} style={{ paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, backgroundColor: colors.primary }}>
               <Text style={{ color: '#fff', fontWeight: '700' }}>Créer un événement</Text>
             </TouchableOpacity>
           </View>
@@ -394,9 +401,9 @@ export default function Index() {
             {eventCategories.map((category, index) => (
               <View key={index} style={{ marginBottom: 24 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 10 }}>
-                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#111' }}>{category.title}</Text>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: isDarkMode ? colors.foreground : '#111' }}>{category.title}</Text>
                   <TouchableOpacity>
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: '#007AFF' }}>See All</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>See All</Text>
                   </TouchableOpacity>
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 0 }}>

@@ -1,9 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 import { useEffect, useState } from "react";
-import { ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from '../lib/context/AuthContext';
+import { useTheme } from '../lib/context/ThemeContext';
 import { ChatService } from '../lib/services/chat';
 import { EventService } from '../lib/services/events';
 
@@ -37,6 +38,7 @@ export default function ChatMain() {
   const [showSearch, setShowSearch] = useState(false);
 
   const { user } = useAuth();
+  const { isDarkMode, colors } = useTheme();
 
   useEffect(() => {
     if (user) {
@@ -161,18 +163,18 @@ export default function ChatMain() {
 
   if (!user) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* StatusBar géré globalement */}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
-          <View style={{ width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center', marginBottom: 24, backgroundColor: COLORS.accent }}>
+          <View style={{ width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center', marginBottom: 24, backgroundColor: colors.primary }}>
             <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 36 }}>T</Text>
           </View>
-          <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '700', marginBottom: 16 }}>Connectez-vous</Text>
-          <Text style={{ color: COLORS.subtitle, textAlign: 'center', marginBottom: 32 }}>
+          <Text style={{ color: isDarkMode ? colors.foreground : COLORS.text, fontSize: 24, fontWeight: '700', marginBottom: 16 }}>Connectez-vous</Text>
+          <Text style={{ color: isDarkMode ? colors.mutedForeground : COLORS.subtitle, textAlign: 'center', marginBottom: 32 }}>
             Vous devez être connecté pour accéder aux chats
           </Text>
           <Link href="/auth/login" asChild>
-            <TouchableOpacity style={{ backgroundColor: COLORS.accent, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 32, marginBottom: 16, width: '100%' }}>
+            <TouchableOpacity style={{ backgroundColor: colors.primary, borderRadius: 16, paddingVertical: 16, paddingHorizontal: 32, marginBottom: 16, width: '100%' }}>
               <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 18, textAlign: 'center' }}>Se connecter</Text>
             </TouchableOpacity>
           </Link>
@@ -182,26 +184,26 @@ export default function ChatMain() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={{ flex: 1 }}>
+      {/* StatusBar géré globalement */}
       
-      {/* Header clair */}
+      {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 16 }}>
-        <Text style={{ color: COLORS.text, fontSize: 24, fontWeight: '700' }}>Messages</Text>
-        <TouchableOpacity onPress={() => setShowSearch(!showSearch)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border }}>
-          <Ionicons name="search-outline" size={18} color={COLORS.text} />
+        <Text style={{ color: isDarkMode ? colors.foreground : COLORS.text, fontSize: 24, fontWeight: '700' }}>Messages</Text>
+        <TouchableOpacity onPress={() => setShowSearch(!showSearch)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: isDarkMode ? colors.card : COLORS.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: isDarkMode ? colors.border : COLORS.border }}>
+          <Ionicons name="search-outline" size={18} color={isDarkMode ? colors.foreground : COLORS.text} />
         </TouchableOpacity>
       </View>
 
       {/* Search Bar */}
       {showSearch && (
         <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-          <View style={{ backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
-            <Ionicons name="search" size={18} color={COLORS.muted} />
+          <View style={{ backgroundColor: isDarkMode ? colors.card : COLORS.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: isDarkMode ? colors.border : COLORS.border, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } }}>
+            <Ionicons name="search" size={18} color={isDarkMode ? colors.mutedForeground : COLORS.muted} />
             <TextInput
-              style={{ marginLeft: 10, flex: 1, color: COLORS.text, fontSize: 16 }}
+              style={{ marginLeft: 10, flex: 1, color: isDarkMode ? colors.foreground : COLORS.text, fontSize: 16 }}
               placeholder="Rechercher une conversation..."
-              placeholderTextColor={COLORS.muted}
+              placeholderTextColor={isDarkMode ? colors.mutedForeground : COLORS.muted}
               value={searchText}
               onChangeText={setSearchText}
             />
@@ -213,43 +215,43 @@ export default function ChatMain() {
       <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
         {loading ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-            <Text style={{ color: COLORS.subtitle, fontSize: 16 }}>Chargement des messages...</Text>
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : COLORS.subtitle, fontSize: 16 }}>Chargement des messages...</Text>
           </View>
         ) : filteredChats.length === 0 ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-            <Ionicons name="chatbubble-outline" size={48} color={COLORS.muted} />
-            <Text style={{ color: COLORS.text, fontSize: 18, fontWeight: '600', marginTop: 16, marginBottom: 8 }}>Aucun message</Text>
-            <Text style={{ color: COLORS.subtitle, textAlign: 'center' }}>Rejoignez un événement pour commencer à discuter</Text>
+            <Ionicons name="chatbubble-outline" size={48} color={isDarkMode ? colors.mutedForeground : COLORS.muted} />
+            <Text style={{ color: isDarkMode ? colors.foreground : COLORS.text, fontSize: 18, fontWeight: '600', marginTop: 16, marginBottom: 8 }}>Aucun message</Text>
+            <Text style={{ color: isDarkMode ? colors.mutedForeground : COLORS.subtitle, textAlign: 'center' }}>Rejoignez un événement pour commencer à discuter</Text>
           </View>
         ) : (
           <View style={{ paddingBottom: 16 }}>
             {filteredChats.map((chat) => (
               <TouchableOpacity
                 key={chat.id}
-                style={{ backgroundColor: COLORS.surface, borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
+                style={{ backgroundColor: isDarkMode ? colors.card : COLORS.surface, borderRadius: 16, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: isDarkMode ? colors.border : COLORS.border, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 4 } }}
                 onPress={() => router.push(`/chat/${chat.id}`)}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={{ width: 48, height: 48, backgroundColor: '#EEF2FF', borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: COLORS.border }}>
-                    <Text style={{ color: COLORS.text, fontWeight: '700', fontSize: 18 }}>
+                  <View style={{ width: 48, height: 48, backgroundColor: isDarkMode ? colors.input : '#EEF2FF', borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: isDarkMode ? colors.border : COLORS.border }}>
+                    <Text style={{ color: isDarkMode ? colors.foreground : COLORS.text, fontWeight: '700', fontSize: 18 }}>
                       {chat.eventTitle?.charAt(0) || 'E'}
                     </Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ color: COLORS.text, fontWeight: '700', fontSize: 16 }}>{chat.eventTitle}</Text>
-                    <Text style={{ color: COLORS.subtitle, fontSize: 13 }}>
+                    <Text style={{ color: isDarkMode ? colors.foreground : COLORS.text, fontWeight: '700', fontSize: 16 }}>{chat.eventTitle}</Text>
+                    <Text style={{ color: isDarkMode ? colors.mutedForeground : COLORS.subtitle, fontSize: 13 }}>
                       {chat.lastMessage || 'Aucun message'}
                     </Text>
-                    <Text style={{ color: COLORS.muted, fontSize: 12, marginTop: 4 }}>
+                    <Text style={{ color: isDarkMode ? colors.mutedForeground : COLORS.muted, fontSize: 12, marginTop: 4 }}>
                       {chat.participants} participants
                     </Text>
                   </View>
                   <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ color: COLORS.muted, fontSize: 12, marginBottom: 8 }}>
+                    <Text style={{ color: isDarkMode ? colors.mutedForeground : COLORS.muted, fontSize: 12, marginBottom: 8 }}>
                       {chat.lastMessageTime || ''}
                     </Text>
                     {chat.unreadCount > 0 && (
-                      <View style={{ backgroundColor: COLORS.accent, borderRadius: 999, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
+                      <View style={{ backgroundColor: colors.primary, borderRadius: 999, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 }}>
                         <Text style={{ color: '#ffffff', fontSize: 12, fontWeight: '700' }}>
                           {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
                         </Text>
