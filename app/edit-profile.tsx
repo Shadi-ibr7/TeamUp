@@ -3,7 +3,7 @@ import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Image, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
 import { ProfileService, UserProfile } from '../lib/services/profile';
@@ -206,7 +206,7 @@ export default function EditProfileScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#141A1F]">
-      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
+{/* StatusBar géré globalement */}
       
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}

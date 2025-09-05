@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Image, ImageBackground, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
 import { useTheme } from '../lib/context/ThemeContext';
@@ -239,7 +238,7 @@ export default function Index() {
       style={{ width: isCompact ? 160 : 200, marginRight: 16 }}
       onPress={() => router.push(`/events/${event.id}`)}
     >
-      <View style={{ borderRadius: 16, overflow: 'hidden', backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.6)', borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)' }}>
+      <View style={{ borderRadius: 16, overflow: 'hidden', backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }}>
         {/* Image */}
         <View style={{ height: isCompact ? 100 : 120, position: 'relative' }}>
           {event.image_url ? (
@@ -266,19 +265,19 @@ export default function Index() {
         <View style={{ padding: 12 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
             <Ionicons name="calendar" size={14} color={colors.primary} />
-            <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 12, marginLeft: 8 }} numberOfLines={1}>
+            <Text style={{ color: colors.foreground, fontSize: 12, marginLeft: 8 }} numberOfLines={1}>
               {formatEventDate(event.date, event.time)}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
             <Ionicons name="location" size={14} color={colors.primary} />
-            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 12, marginLeft: 8, flex: 1 }} numberOfLines={1}>
+            <Text style={{ color: colors.mutedForeground, fontSize: 12, marginLeft: 8, flex: 1 }} numberOfLines={1}>
               {event.location}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="people" size={14} color={colors.primary} />
-            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 12, marginLeft: 8 }}>
+            <Text style={{ color: colors.mutedForeground, fontSize: 12, marginLeft: 8 }}>
               {event.current_participants || 0}/{event.max_participants}
             </Text>
           </View>
@@ -290,14 +289,8 @@ export default function Index() {
   // Rediriger vers login si pas connecté (écran simplifié)
   if (!user) {
     return (
-      <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200' }}
-        style={{ flex: 1 }}
-        blurRadius={30}
-      >
-        <LinearGradient colors={['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']} style={{ flex: 1 }}>
-          <SafeAreaView style={{ flex: 1 }}>
-            <StatusBar barStyle="dark-content" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: 'transparent' }}>
+        {/* Background géré globalement par _layout.tsx */}
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
               <View style={{ padding: 32, borderRadius: 24, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
                 <View style={{ width: 96, height: 96, borderRadius: 48, alignItems: 'center', justifyContent: 'center', marginBottom: 24, backgroundColor: 'rgba(0,122,255,0.2)' }}>
@@ -319,39 +312,44 @@ export default function Index() {
                 </View>
               </View>
             </View>
-          </SafeAreaView>
-        </LinearGradient>
-      </ImageBackground>
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* StatusBar géré globalement */}
 
       {/* Header simplifié */}
       <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ fontSize: 20, fontWeight: '700', color: isDarkMode ? '#FFFFFF' : '#111' }}>TeamUp</Text>
+        <Text style={{ fontSize: 20, fontWeight: '700', color: colors.foreground }}>TeamUp</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={toggleTheme} style={{ padding: 8, borderRadius: 999, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', marginRight: 8 }}>
-            <Ionicons name={isDarkMode ? "sunny" : "moon"} size={22} color={isDarkMode ? '#FFFFFF' : '#111'} />
+          <TouchableOpacity 
+            onPress={() => {
+              console.log('Dark mode avant toggle:', isDarkMode);
+              toggleTheme();
+              console.log('Dark mode après toggle:', !isDarkMode);
+            }} 
+            style={{ padding: 8, borderRadius: 999, backgroundColor: colors.input, marginRight: 8 }}
+          >
+            <Ionicons name={isDarkMode ? "sunny" : "moon"} size={22} color={colors.foreground} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleSignOut} style={{ padding: 8, borderRadius: 999, backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}>
-            <Ionicons name="log-out-outline" size={22} color={isDarkMode ? '#FFFFFF' : '#111'} />
+          <TouchableOpacity onPress={handleSignOut} style={{ padding: 8, borderRadius: 999, backgroundColor: colors.input }}>
+            <Ionicons name="log-out-outline" size={22} color={colors.foreground} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Barre de recherche */}
       <View style={{ paddingHorizontal: 16, paddingBottom: 8 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)', borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10 }}>
-          <Ionicons name="search" size={18} color={isDarkMode ? '#FFFFFF' : '#666'} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.input, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 10 }}>
+          <Ionicons name="search" size={18} color={colors.mutedForeground} />
           <TextInput
             placeholder="Rechercher des événements..."
-            placeholderTextColor={isDarkMode ? '#CCCCCC' : '#888'}
+            placeholderTextColor={colors.mutedForeground}
             value={searchText}
             onChangeText={setSearchText}
-            style={{ marginLeft: 8, flex: 1, color: isDarkMode ? '#FFFFFF' : '#111' }}
+            style={{ marginLeft: 8, flex: 1, color: colors.foreground }}
           />
         </View>
       </View>
@@ -368,10 +366,10 @@ export default function Index() {
                 paddingHorizontal: 14,
                 paddingVertical: 8,
                 borderRadius: 999,
-                backgroundColor: selectedFilter === filter ? colors.primary : (isDarkMode ? colors.input : 'rgba(0,0,0,0.06)')
+                backgroundColor: selectedFilter === filter ? colors.primary : colors.input
               }}
             >
-              <Text style={{ color: selectedFilter === filter ? '#fff' : (isDarkMode ? colors.foreground : '#111'), fontWeight: '600' }}>{filter}</Text>
+              <Text style={{ color: selectedFilter === filter ? '#fff' : colors.foreground, fontWeight: '600' }}>{filter}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -381,15 +379,15 @@ export default function Index() {
       <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
         {loading ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-            <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 16 }}>Chargement des événements...</Text>
+            <Text style={{ color: colors.mutedForeground, fontSize: 16 }}>Chargement des événements...</Text>
           </View>
         ) : eventCategories.length === 0 ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
-            <Ionicons name="calendar-outline" size={64} color={isDarkMode ? colors.mutedForeground : '#999'} />
-            <Text style={{ fontSize: 18, fontWeight: '600', color: isDarkMode ? colors.foreground : '#111', marginTop: 12, marginBottom: 8 }}>
+            <Ionicons name="calendar-outline" size={64} color={colors.mutedForeground} />
+            <Text style={{ fontSize: 18, fontWeight: '600', color: colors.foreground, marginTop: 12, marginBottom: 8 }}>
               Aucun événement trouvé
             </Text>
-            <Text style={{ textAlign: 'center', color: isDarkMode ? colors.mutedForeground : '#666', marginBottom: 16 }}>
+            <Text style={{ textAlign: 'center', color: colors.mutedForeground, marginBottom: 16 }}>
               Créez votre premier événement pour commencer
             </Text>
             <TouchableOpacity onPress={() => router.push('/create-event')} style={{ paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, backgroundColor: colors.primary }}>
@@ -401,7 +399,7 @@ export default function Index() {
             {eventCategories.map((category, index) => (
               <View key={index} style={{ marginBottom: 24 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingHorizontal: 10 }}>
-                  <Text style={{ fontSize: 18, fontWeight: '700', color: isDarkMode ? colors.foreground : '#111' }}>{category.title}</Text>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: colors.foreground }}>{category.title}</Text>
                   <TouchableOpacity>
                     <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>See All</Text>
                   </TouchableOpacity>

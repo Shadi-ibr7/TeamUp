@@ -54,11 +54,11 @@ const ReservationItem: React.FC<ReservationItemProps> = ({ reservation, onPress 
   };
 
   return (
-    <TouchableOpacity style={[styles.reservationCard, { backgroundColor: isDarkMode ? colors.card : '#1e293b', borderColor: isDarkMode ? colors.border : '#334155' }]} onPress={onPress}>
+    <TouchableOpacity style={[styles.reservationCard, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={onPress}>
       <View style={styles.reservationHeader}>
         <View style={styles.reservationInfo}>
-          <Text style={[styles.equipmentName, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}>{reservation.equipment.name}</Text>
-          <Text style={[styles.sportType, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>{reservation.sport_type}</Text>
+          <Text style={[styles.equipmentName, { color: colors.foreground }]}>{reservation.equipment.name}</Text>
+          <Text style={[styles.sportType, { color: colors.mutedForeground }]}>{reservation.sport_type}</Text>
         </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(reservation.status) }]}>
           <Ionicons name={getStatusIcon(reservation.status) as any} size={16} color="#ffffff" />
@@ -177,7 +177,7 @@ export default function MesReservationsScreen() {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Chargement de vos réservations...</Text>
@@ -187,7 +187,7 @@ export default function MesReservationsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: isDarkMode ? colors.border : '#1e293b' }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>

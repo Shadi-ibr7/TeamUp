@@ -275,7 +275,7 @@ export default function Discover() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* StatusBar géré globalement */}
       
       {/* Header simple */}

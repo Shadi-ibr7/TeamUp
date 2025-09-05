@@ -26,10 +26,10 @@ const TerrainItem: React.FC<TerrainItemProps> = ({ equipment, onPress }) => {
   const { isDarkMode, colors } = useTheme();
 
   return (
-    <TouchableOpacity style={[styles.terrainItem, { backgroundColor: isDarkMode ? colors.card : '#1e293b', borderColor: isDarkMode ? colors.border : '#334155' }]} onPress={onPress}>
+    <TouchableOpacity style={[styles.terrainItem, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={onPress}>
       <View style={styles.terrainHeader}>
-        <Text style={[styles.terrainName, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}>{equipment.name}</Text>
-        <View style={[styles.terrainType, { backgroundColor: isDarkMode ? colors.input : '#0f172a' }]}>
+        <Text style={[styles.terrainName, { color: colors.foreground }]}>{equipment.name}</Text>
+        <View style={[styles.terrainType, { backgroundColor: colors.input }]}>
           <Ionicons name="football" size={16} color={colors.primary} />
           <Text style={[styles.terrainTypeText, { color: colors.primary }]}>{equipment.type}</Text>
         </View>
@@ -37,36 +37,36 @@ const TerrainItem: React.FC<TerrainItemProps> = ({ equipment, onPress }) => {
       
       <View style={styles.terrainDetails}>
         <View style={styles.detailRow}>
-          <Ionicons name="location" size={14} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
-          <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>
+          <Ionicons name="location" size={14} color={colors.mutedForeground} />
+          <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
             {equipment.address}, {equipment.city} ({equipment.department})
           </Text>
         </View>
         
         {equipment.manager_name && (
           <View style={styles.detailRow}>
-            <Ionicons name="business" size={14} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
-            <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>{equipment.manager_name}</Text>
+            <Ionicons name="business" size={14} color={colors.mutedForeground} />
+            <Text style={[styles.detailText, { color: colors.mutedForeground }]}>{equipment.manager_name}</Text>
           </View>
         )}
         
         {equipment.accessibility && (
           <View style={styles.detailRow}>
-            <Ionicons name="accessibility" size={14} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
-            <Text style={[styles.detailText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>{equipment.accessibility}</Text>
+            <Ionicons name="accessibility" size={14} color={colors.mutedForeground} />
+            <Text style={[styles.detailText, { color: colors.mutedForeground }]}>{equipment.accessibility}</Text>
           </View>
         )}
       </View>
       
       <View style={styles.terrainActions}>
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: isDarkMode ? colors.input : '#0f172a' }]}>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.input }]}>
           <Ionicons name="calendar" size={16} color={colors.primary} />
-          <Text style={[styles.actionButtonText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Réserver</Text>
+          <Text style={[styles.actionButtonText, { color: colors.mutedForeground }]}>Réserver</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={[styles.actionButton, { backgroundColor: isDarkMode ? colors.input : '#0f172a' }]}>
-          <Ionicons name="map" size={16} color={isDarkMode ? colors.mutedForeground : '#64748b'} />
-          <Text style={[styles.actionButtonText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Voir sur la carte</Text>
+        <TouchableOpacity style={[styles.actionButton, { backgroundColor: colors.input }]}>
+          <Ionicons name="map" size={16} color={colors.mutedForeground} />
+          <Text style={[styles.actionButtonText, { color: colors.mutedForeground }]}>Voir sur la carte</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -197,7 +197,7 @@ export default function TerrainsScreen() {
 
   if (loading && !refreshing) {
     return (
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: isDarkMode ? colors.mutedForeground : '#64748b' }]}>Chargement des terrains...</Text>
@@ -207,7 +207,7 @@ export default function TerrainsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: isDarkMode ? colors.border : '#1e293b' }]}>
         <Text style={[styles.title, { color: isDarkMode ? colors.foreground : '#f8fafc' }]}>Terrains Publics</Text>

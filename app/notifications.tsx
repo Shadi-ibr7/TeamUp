@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import {
     FlatList,
     RefreshControl,
-    StatusBar,
     Text,
     TouchableOpacity,
     View
@@ -207,8 +206,8 @@ export default function NotificationsScreen() {
 
   if (!user) {
     return (
-      <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom', 'left', 'right']}>
-        <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={isDarkMode ? "#0f172a" : "#FFFFFF"} />
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'bottom', 'left', 'right']}>
+{/* StatusBar géré globalement */}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
           <Text style={{ color: isDarkMode ? colors.foreground : '#111', fontSize: 20, fontWeight: '600', marginBottom: 16, textAlign: 'center' }}>
             Connectez-vous pour voir vos notifications
@@ -225,8 +224,8 @@ export default function NotificationsScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={isDarkMode ? "#0f172a" : "#FFFFFF"} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'left', 'right']}>
+{/* StatusBar géré globalement */}
       
       {/* Header */}
       <View style={{

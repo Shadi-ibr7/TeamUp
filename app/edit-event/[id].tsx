@@ -3,7 +3,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Image, Platform, ScrollView, StatusBar, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useAuth } from '../../lib/context/AuthContext';
 import { EventService } from '../../lib/services/events';
 import { ProfileService } from '../../lib/services/profile';
@@ -207,7 +207,7 @@ export default function EditEvent() {
 
   return (
     <View className="flex-1 bg-[#141A1F]" style={{ backgroundColor: '#141A1F' }}>
-      <StatusBar barStyle="light-content" backgroundColor="#141A1F" />
+{/* StatusBar géré globalement */}
       
       {/* Header */}
       <View className="flex-row items-center px-4 py-4 bg-[#141A1F] pt-12">

@@ -3,16 +3,15 @@ import * as ImagePicker from 'expo-image-picker';
 import { Link, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  Image,
-  KeyboardAvoidingView,
-  Platform,
-  StatusBar,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    FlatList,
+    Image,
+    KeyboardAvoidingView,
+    Platform,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/context/AuthContext';
@@ -463,7 +462,7 @@ export default function EventChat() {
   if (!user) {
     return (
       <SafeAreaView className="flex-1 bg-slate-900 items-center justify-center" edges={['top', 'bottom', 'left', 'right']}>
-        <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+{/* StatusBar géré globalement */}
         
         <View className="items-center px-8">
           <View className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full items-center justify-center mb-6">
@@ -486,7 +485,7 @@ export default function EventChat() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-900" edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+{/* StatusBar géré globalement */}
       
       {/* Header */}
       <View className="flex-row items-center px-4 py-4 bg-slate-800 border-b border-slate-700">

@@ -12,15 +12,15 @@ import { AuthProvider, useAuth } from '../lib/context/AuthContext';
 import { ThemeProvider, useTheme } from '../lib/context/ThemeContext';
 
 function LoadingScreen() {
-  const { isDarkMode, colors } = useTheme();
+  const { colors } = useTheme();
   
   return (
     <LinearGradient
-      colors={isDarkMode ? ['#0f172a', '#1e293b'] : ['#ffffff', '#f0f9ff']}
+      colors={colors.backgroundGradient}
       style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
     >
       <ActivityIndicator size="large" color={colors.primary} />
-      <Text style={{ marginTop: 16, fontSize: 16, color: isDarkMode ? colors.foreground : '#111' }}>Chargement...</Text>
+      <Text style={{ marginTop: 16, fontSize: 16, color: colors.foreground }}>Chargement...</Text>
     </LinearGradient>
   );
 }
@@ -54,7 +54,7 @@ function RootLayoutNav() {
         router.replace('/');
       }
     }
-  }, [user, loading, segments]);
+  }, [user, loading, segments, router]);
 
   // Afficher un écran de chargement pendant l'initialisation
   if (loading) {
@@ -103,12 +103,12 @@ function ThemedLayout() {
 
   return (
     <LinearGradient
-      colors={isDarkMode ? ['#0f172a', '#1e293b'] : ['#ffffff', '#f0f9ff']}
+      colors={colors.backgroundGradient}
       style={{ flex: 1 }}
     >
       <RootLayoutNav />
       {shouldShowBottomNav && <BottomNav />}
-      <StatusBar style={isDarkMode ? "light" : "dark"} backgroundColor={isDarkMode ? "#0f172a" : "#ffffff"} />
+      <StatusBar style={isDarkMode ? "light" : "dark"} backgroundColor={colors.background} />
     </LinearGradient>
   );
 }

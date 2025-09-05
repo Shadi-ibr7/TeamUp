@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Link } from "expo-router";
 import { Text, TouchableOpacity, View } from "react-native";
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from "../../lib/context/ThemeContext";
 
 interface HeaderProps {
@@ -18,14 +19,16 @@ export default function Header({ title, showBackButton = false, onBackPress, rig
   const { isDarkMode, toggleTheme, colors } = useTheme();
 
   return (
-    <View style={{ 
-      flexDirection: 'row', 
-      alignItems: 'center', 
-      justifyContent: 'space-between', 
-      paddingHorizontal: 16, 
-      paddingVertical: 16,
-      backgroundColor: colors.background
-    }}>
+    <LinearGradient
+      colors={colors.backgroundGradient}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 16,
+      }}
+    >
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
         {showBackButton && (
           <TouchableOpacity onPress={onBackPress} style={{ marginRight: 12 }}>
@@ -77,7 +80,7 @@ export default function Header({ title, showBackButton = false, onBackPress, rig
           </TouchableOpacity>
         )}
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 

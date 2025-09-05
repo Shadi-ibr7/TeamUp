@@ -1,10 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as ImagePicker from 'expo-image-picker';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Image, ImageBackground, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from "../lib/context/AuthContext";
 import { useTheme } from '../lib/context/ThemeContext';
@@ -268,14 +267,8 @@ export default function CreateEvent() {
   };
 
   return (
-    <ImageBackground
-      source={{ uri: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200' }}
-      style={{ flex: 1 }}
-      blurRadius={30}
-    >
-      <LinearGradient colors={isDarkMode ? ['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)'] : ['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']} style={{ flex: 1 }}>
-        <SafeAreaView style={{ flex: 1 }}>
-          {/* StatusBar géré globalement */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Background géré globalement par _layout.tsx */}
           
           {/* Header simple */}
           <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -588,8 +581,6 @@ export default function CreateEvent() {
               </View>
             </View>
           </Modal>
-        </SafeAreaView>
-      </LinearGradient>
-    </ImageBackground>
+    </SafeAreaView>
   );
 } 

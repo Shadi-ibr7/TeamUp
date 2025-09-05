@@ -1,8 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Image, ImageBackground, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../lib/context/AuthContext';
 import { useTheme } from '../lib/context/ThemeContext';
@@ -111,7 +110,7 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
         {/* StatusBar géré globalement */}
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666' }}>Chargement du profil...</Text>
@@ -121,14 +120,8 @@ export default function ProfileScreen() {
   }
 
   return (
-    <ImageBackground
-      source={{ uri: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200' }}
-      style={{ flex: 1 }}
-      blurRadius={30}
-    >
-      <LinearGradient colors={isDarkMode ? ['rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)'] : ['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']} style={{ flex: 1 }}>
-        <SafeAreaView style={{ flex: 1 }}>
-          {/* StatusBar géré globalement */}
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Background géré globalement par _layout.tsx */}
 
           {/* Header simple */}
           <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -265,8 +258,6 @@ export default function ProfileScreen() {
               </View>
             </View>
           </Modal>
-        </SafeAreaView>
-      </LinearGradient>
-    </ImageBackground>
+    </SafeAreaView>
   );
 } 

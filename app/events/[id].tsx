@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, Image, ImageBackground, Linking, Platform, ScrollView, StatusBar, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, Linking, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/context/AuthContext';
 import { EventService } from '../../lib/services/events';
@@ -115,8 +114,8 @@ export default function EventDetails() {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F2F2F7' }}>
-        <StatusBar barStyle="dark-content" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+{/* StatusBar géré globalement */}
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ color: '#666' }}>Chargement de l'événement...</Text>
         </View>
@@ -126,8 +125,8 @@ export default function EventDetails() {
 
   if (!eventData) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#F2F2F7' }}>
-        <StatusBar barStyle="dark-content" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+{/* StatusBar géré globalement */}
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{ color: '#111' }}>Événement non trouvé</Text>
         </View>
@@ -139,14 +138,8 @@ export default function EventDetails() {
   const isOrganizer = user?.id === eventData.organizer_id;
 
   return (
-    <ImageBackground
-      source={{ uri: eventData.image_url || 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200' }}
-      style={{ flex: 1 }}
-      blurRadius={30}
-    >
-      <LinearGradient colors={['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']} style={{ flex: 1 }}>
-        <SafeAreaView style={{ flex: 1 }}>
-          <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Background géré globalement par _layout.tsx */}
           
           {/* Header simple */}
           <View style={{ paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -287,8 +280,6 @@ export default function EventDetails() {
               </View>
             </View>
           </ScrollView>
-        </SafeAreaView>
-      </LinearGradient>
-    </ImageBackground>
+    </SafeAreaView>
   );
 }

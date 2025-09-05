@@ -1,21 +1,14 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
-import { Image, ImageBackground, StatusBar, Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../lib/context/ThemeContext';
 
 export default function Welcome() {
+  const { colors } = useTheme();
+  
   return (
-    <ImageBackground
-      source={{ uri: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200' }}
-      style={{ flex: 1 }}
-      blurRadius={30}
-    >
-      <LinearGradient
-        colors={['rgba(255,255,255,0.3)', 'rgba(242,242,247,0.7)']}
-        style={{ flex: 1 }}
-      >
-        <SafeAreaView style={{ flex: 1 }}>
-          <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      {/* Background géré globalement par _layout.tsx */}
           
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
             <View 
@@ -74,8 +67,6 @@ export default function Welcome() {
               </View>
             </View>
           </View>
-        </SafeAreaView>
-      </LinearGradient>
-    </ImageBackground>
+    </SafeAreaView>
   );
 } 
