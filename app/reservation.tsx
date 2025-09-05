@@ -209,7 +209,7 @@ export default function ReservationScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Header */}
         <View style={{ 
           flexDirection: 'row', 

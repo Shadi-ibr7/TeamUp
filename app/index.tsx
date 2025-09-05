@@ -376,7 +376,7 @@ export default function Index() {
       </View>
 
       {/* Liste d'événements */}
-      <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {loading ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
             <Text style={{ color: colors.mutedForeground, fontSize: 16 }}>Chargement des événements...</Text>

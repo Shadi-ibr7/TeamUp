@@ -309,6 +309,7 @@ export default function TerrainsScreen() {
       <FlatList
         data={equipments}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 120 }}
         renderItem={({ item }) => (
           <TerrainItem
             equipment={item}

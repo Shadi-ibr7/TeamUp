@@ -279,7 +279,7 @@ export default function CreateEvent() {
             <View style={{ width: 38 }} />
           </View>
 
-          <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
             <View style={{ backgroundColor: isDarkMode ? colors.card : 'rgba(255,255,255,0.6)', borderRadius: 16, borderWidth: 1, borderColor: isDarkMode ? colors.border : 'rgba(0,0,0,0.08)', padding: 24, marginBottom: 24 }}>
               <Text style={{ fontSize: 24, fontWeight: '700', marginBottom: 24, color: isDarkMode ? colors.foreground : '#111' }}>
                 Nouvel événement

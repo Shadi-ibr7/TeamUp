@@ -223,6 +223,7 @@ export default function MesReservationsScreen() {
       <FlatList
         data={reservations}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 120 }}
         renderItem={({ item }) => (
           <ReservationItem
             reservation={item}

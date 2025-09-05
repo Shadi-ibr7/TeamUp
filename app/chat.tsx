@@ -212,7 +212,7 @@ export default function ChatMain() {
       )}
 
       {/* Chat List */}
-      <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         {loading ? (
           <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
             <Text style={{ color: isDarkMode ? colors.mutedForeground : COLORS.subtitle, fontSize: 16 }}>Chargement des messages...</Text>

@@ -324,7 +324,7 @@ export default function Discover() {
 
       {/* Map or List View */}
       {showList ? (
-        <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false}>
+        <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
           {loading ? (
             <View style={{ justifyContent: 'center', alignItems: 'center', paddingVertical: 80 }}>
               <Text style={{ color: isDarkMode ? colors.mutedForeground : '#666', fontSize: 16 }}>Chargement des événements...</Text>

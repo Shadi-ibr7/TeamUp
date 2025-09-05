@@ -266,7 +266,7 @@ export default function NotificationsScreen() {
         contentContainerStyle={{ 
           flexGrow: 1,
           paddingTop: notifications.length === 0 ? 0 : 16,
-          paddingBottom: 100
+          paddingBottom: 120
         }}
         refreshControl={
           <RefreshControl
